@@ -3,8 +3,11 @@ import sys
 from io import StringIO
 from textwrap import dedent
 
-from .core import filter_builtin_ies, import_youtube_dl
+from .core import enable_extractors
 from .exceptions import DLPlusException
+
+
+__all__ = ['main']
 
 
 def _dedent(text):
@@ -13,30 +16,33 @@ def _dedent(text):
 
 class _ArgParser(argparse.ArgumentParser):
 
-    def __init__(self, *, youtube_dl_help_extractor, **kwargs):
+    def __init__(self, *, ytdl_help_extractor, **kwargs):
         super().__init__(**kwargs)
-        self._youtube_dl_help_extractor = youtube_dl_help_extractor
+        self._ytdl_help_extractor = ytdl_help_extractor
 
     def format_help(self):
-        return super().format_help() + self._youtube_dl_help_extractor()
+        return super().format_help() + self._ytdl_help_extractor()
 
 
 def _main(argv):
-    youtube_dl = import_youtube_dl()
-    youtube_dl_main = youtube_dl.main
+    try:
+        import youtube_dl
+    except ImportError:
+        raise DLPlusException('youtube-dl not found')
 
-    def youtube_dl_help_extractor():
+    ytdl_main = youtube_dl.main
+
+    def ytdl_help_extractor():
         with StringIO() as buffer:
             stdout, stderr = sys.stdout, sys.stderr
             sys.stdout = sys.stderr = buffer
             try:
-                youtube_dl_main(['--help'])
+                ytdl_main(['--help'])
             except SystemExit:
                 pass
             finally:
                 sys.stdout, sys.stderr = stdout, stderr
-            youtube_dl_help = buffer.getvalue()
-        return youtube_dl_help.partition('Options:')[2]
+            return buffer.getvalue().partition('Options:')[2]
 
     parser = _ArgParser(
         prog='dl-plus',
@@ -49,7 +55,7 @@ def _main(argv):
         epilog='The following are youtube-dl options:',
         add_help=False,
         formatter_class=argparse.RawTextHelpFormatter,
-        youtube_dl_help_extractor=youtube_dl_help_extractor,
+        ytdl_help_extractor=ytdl_help_extractor,
     )
     parser.add_argument(
         '-E', '--extractor',
@@ -65,9 +71,10 @@ def _main(argv):
     )
     parsed_args, ytdl_args = parser.parse_known_args(argv)
     ie_names = parsed_args.extractor
-    if ie_names:
-        filter_builtin_ies(ie_names)
-    youtube_dl_main(ytdl_args)
+    if not ie_names:
+        ie_names = [':builtins:', ':plugins:']
+    enable_extractors(ie_names)
+    ytdl_main(ytdl_args)
 
 
 def main(argv=None):

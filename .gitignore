@@ -3,3 +3,5 @@
 !.editorconfig
 
 *.py[co]
+
+plugin*/
