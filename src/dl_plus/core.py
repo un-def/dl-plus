@@ -8,6 +8,9 @@ import re
 from .exceptions import UnknownExtractor
 
 
+__version__ = '0.1.0.dev0'
+
+
 PLUGINS_PACKAGE = 'dl_plus.extractors'
 
 _NOTSET = object()
