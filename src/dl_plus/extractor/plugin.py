@@ -1,9 +1,12 @@
 from functools import partial
 
-from youtube_dl.extractor.common import InfoExtractor
+from dl_plus.exceptions import DLPlusException
 
-from .core import PEQN
-from .exceptions import DLPlusException
+from .extractor import Extractor
+from .peqn import PEQN
+
+
+EXTRACTOR_PEQN_ATTR = '_dl_plus_peqn'
 
 
 class ExtractorPluginError(DLPlusException):
@@ -11,16 +14,7 @@ class ExtractorPluginError(DLPlusException):
     pass
 
 
-class Extractor(InfoExtractor):
-
-    @classmethod
-    def ie_key(cls):
-        return cls.IE_NAME
-
-
 class ExtractorPlugin:
-
-    EXTRACTOR_PEQN_ATTR = '_dl_plus_peqn'
 
     def __init__(self, import_path):
         try:
@@ -36,8 +30,8 @@ class ExtractorPlugin:
         if not issubclass(extractor_cls, Extractor):
             raise ExtractorPluginError(
                 f'Extractor subclass expected, got: {extractor_cls!r}')
-        if self.EXTRACTOR_PEQN_ATTR in extractor_cls.__dict__:
-            peqn = extractor_cls.__dict__[self.EXTRACTOR_PEQN_ATTR]
+        if EXTRACTOR_PEQN_ATTR in extractor_cls.__dict__:
+            peqn = extractor_cls.__dict__[EXTRACTOR_PEQN_ATTR]
             raise ExtractorPluginError(
                 f'the extractor {extractor_cls!r} is already exported '
                 f'as "{peqn}"'
@@ -52,7 +46,7 @@ class ExtractorPlugin:
             raise ExtractorPluginError(
                 f'the plugin already exports an extractor called "{name}"')
         peqn = self._base_peqn.copy(name=name)
-        setattr(extractor_cls, self.EXTRACTOR_PEQN_ATTR, peqn)
+        setattr(extractor_cls, EXTRACTOR_PEQN_ATTR, peqn)
         extractor_cls.IE_NAME = str(peqn)
         self._extractors[name] = extractor_cls
         return extractor_cls

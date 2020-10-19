@@ -1,0 +1,1 @@
+NOTSET = object()
