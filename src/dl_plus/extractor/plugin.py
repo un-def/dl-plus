@@ -1,4 +1,5 @@
 from functools import partial
+from typing import Callable, Dict, List, Optional, Type, Union, cast, overload
 
 from dl_plus.exceptions import DLPlusException
 
@@ -9,6 +10,10 @@ from .peqn import PEQN
 EXTRACTOR_PEQN_ATTR = '_dl_plus_peqn'
 
 
+ExtractorType = Type[Extractor]
+ExportDecoratorType = Callable[[ExtractorType], ExtractorType]
+
+
 class ExtractorPluginError(DLPlusException):
 
     pass
@@ -16,22 +21,41 @@ class ExtractorPluginError(DLPlusException):
 
 class ExtractorPlugin:
 
-    def __init__(self, import_path):
+    def __init__(self, import_path: str) -> None:
         try:
             self._base_peqn = PEQN.from_plugin_import_path(import_path)
         except ValueError as exc:
             raise ExtractorPluginError(exc)
-        self._extractors = {}
+        self._extractors: Dict[Optional[str], ExtractorType] = {}
 
-    def export(self, extractor_cls_or_name, name=None):
+    @overload
+    def export(self, extractor_cls_or_name: ExtractorType) -> ExtractorType:
+        ...
+
+    @overload
+    def export(
+        self, extractor_cls_or_name: str,
+    ) -> ExportDecoratorType:
+        ...
+
+    def export(
+        self, extractor_cls_or_name: Union[ExtractorType, str],
+    ) -> Union[ExtractorType, ExportDecoratorType]:
         if isinstance(extractor_cls_or_name, str):
-            return partial(self.export, name=extractor_cls_or_name)
-        extractor_cls = extractor_cls_or_name
+            return partial(self._export, name=extractor_cls_or_name)
+        return self._export(extractor_cls_or_name, None)
+
+    def _export(
+        self, extractor_cls: ExtractorType, name: Optional[str],
+    ) -> ExtractorType:
         if not issubclass(extractor_cls, Extractor):
             raise ExtractorPluginError(
                 f'Extractor subclass expected, got: {extractor_cls!r}')
-        if EXTRACTOR_PEQN_ATTR in extractor_cls.__dict__:
-            peqn = extractor_cls.__dict__[EXTRACTOR_PEQN_ATTR]
+        if EXTRACTOR_PEQN_ATTR in extractor_cls.__dict__:   # type: ignore
+            peqn = cast(
+                PEQN,
+                extractor_cls.__dict__[EXTRACTOR_PEQN_ATTR],   # type: ignore
+            )
             raise ExtractorPluginError(
                 f'the extractor {extractor_cls!r} is already exported '
                 f'as "{peqn}"'
@@ -51,8 +75,8 @@ class ExtractorPlugin:
         self._extractors[name] = extractor_cls
         return extractor_cls
 
-    def get_extractor(self, name=None):
+    def get_extractor(self, name: Optional[str] = None) -> ExtractorType:
         return self._extractors[name]
 
-    def get_all_extractors(self):
+    def get_all_extractors(self) -> List[ExtractorType]:
         return list(self._extractors.values())
