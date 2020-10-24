@@ -46,7 +46,7 @@ def load_extractors_by_plugin_import_path(plugin_import_path, names=None):
             extractors = list(map(plugin.get_extractor, names))
         except KeyError as exc:
             raise ExtractorLoadError(
-                f'{plugin_import_path} does not export {exc.args[0]}')
+                f'{plugin_import_path} does not contain {exc.args[0]}')
     else:
         extractors = plugin.get_all_extractors()
     return extractors

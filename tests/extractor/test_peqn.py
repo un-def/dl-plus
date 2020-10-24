@@ -7,7 +7,7 @@ from dl_plus.extractor.peqn import PEQN
     ('dl_plus.extractors.foo.bar', 'foo', 'bar'),
     ('dl_plus.extractors._1foo._2bar', '1foo', '2bar'),
 ])
-def test_from_plugin_import_path_ok(path, expected_ns, expected_plugin):
+def test_from_plugin_import_path(path, expected_ns, expected_plugin):
     peqn = PEQN.from_plugin_import_path(path)
     assert peqn.ns == expected_ns
     assert peqn.plugin == expected_plugin
@@ -28,14 +28,14 @@ def test_from_plugin_import_path_error(path, expected_error):
         PEQN.from_plugin_import_path(path)
 
 
-def test_from_string_ok_without_name():
+def test_from_string_without_name():
     peqn = PEQN.from_string('foo/1bar')
     assert peqn.ns == 'foo'
     assert peqn.plugin == '1bar'
     assert peqn.name is None
 
 
-def test_from_string_ok_with_name():
+def test_from_string_with_name():
     peqn = PEQN.from_string('1foo/bar:baz')
     assert peqn.ns == '1foo'
     assert peqn.plugin == 'bar'
