@@ -48,6 +48,8 @@ A [youtube-dl][youtube-dl-website] extension with pluggable extractors
 
 ## Extractor Plugin Authoring Guide
 
+NOTE: you can use the [un1def/wasdtv][un1def-wasdtv-extractor-repo] plugin repository as an example.
+
 1.  Choose a namespace. Namespaces are used to avoid name conflicts of different plugins created by different authors. It's recommended to use your name, username, or organization name as a namespace. Make sure that the namespace is not already taken (at least search for `dl-plus-extractor-<namespace>` on [PyPI][pypi-website]).
 
     The namespace must consist only of lowercase latin letters and digits. It should be reasonable short to save typing.
