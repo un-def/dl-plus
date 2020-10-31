@@ -1,6 +1,4 @@
-from youtube_dl.utils import ExtractorError
-
-from .extractor import Extractor
+from .extractor import Extractor, ExtractorError
 from .plugin import ExtractorPlugin
 
 

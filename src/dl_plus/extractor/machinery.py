@@ -34,8 +34,8 @@ def discover_extractor_plugins_gen():
 def load_extractors_by_plugin_import_path(plugin_import_path, names=None):
     try:
         plugin_module = importlib.import_module(plugin_import_path)
-    except ImportError:
-        raise ExtractorLoadError(f'cannot import {plugin_import_path}')
+    except ImportError as exc:
+        raise ExtractorLoadError(f'cannot import {plugin_import_path}: {exc}')
     try:
         plugin = plugin_module.plugin
     except AttributeError:

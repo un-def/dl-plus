@@ -3,7 +3,6 @@ import sys
 from textwrap import dedent
 
 from . import ytdl
-from .core import enable_extractors
 from .exceptions import DLPlusException
 
 
@@ -21,19 +20,36 @@ class _ArgParser(argparse.ArgumentParser):
 
 
 def _main(argv):
-    if not ytdl.FOUND:
-        raise DLPlusException('youtube-dl not found')
+    pre_parser = argparse.ArgumentParser(add_help=False)
+    pre_parser.add_argument(
+        '--ytdl-module',
+        metavar='MODULE',
+        help='youtube-dl module import path.',
+    )
+    parsed_pre_args, _ = pre_parser.parse_known_args(argv)
+
+    ytdl_module_name = parsed_pre_args.ytdl_module
+    if not ytdl_module_name:
+        ytdl_module_name = 'youtube_dl'
+    else:
+        ytdl_module_name = ytdl_module_name.replace('-', '_')
+    ytdl.init(ytdl_module_name)
+
     parser = _ArgParser(
         prog='dl-plus',
-        usage='%(prog)s [-E EXTRACTOR] [YOUTUBE-DL OPTIONS] URL [URL...]',
+        usage=(
+            '%(prog)s [--extractor EXTRACTOR] [--ytdl-module MODULE] '
+            '[YOUTUBE-DL OPTIONS] URL [URL...]'
+        ),
         description=_dedent("""
-            %(prog)s is a youtube-dl wrapper extending it in some ways.
+            %(prog)s is a youtube-dl extension with pluggable extractors.
 
             The following are %(prog)s options:
         """),
         epilog='The following are youtube-dl options:',
         add_help=False,
         formatter_class=argparse.RawTextHelpFormatter,
+        parents=[pre_parser],
     )
     parser.add_argument(
         '-E', '--extractor',
@@ -51,6 +67,7 @@ def _main(argv):
     ie_names = parsed_args.extractor
     if not ie_names:
         ie_names = [':builtins:', ':plugins:']
+    from .core import enable_extractors
     enable_extractors(ie_names)
     ytdl.run(ytdl_args)
 

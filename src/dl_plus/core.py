@@ -1,5 +1,6 @@
 import importlib
 
+from . import ytdl
 from .exceptions import DLPlusException
 from .extractor.machinery import load_all_extractors, load_extractors_by_peqn
 
@@ -12,14 +13,13 @@ def get_ie_name(ie_cls):
 
 
 def enable_extractors(names):
-    ytdl_extractor_module = importlib.import_module('youtube_dl.extractor')
+    ytdl_extractor_module = ytdl.import_module('extractor')
     ytdl_extractors = ytdl_extractor_module._ALL_CLASSES
     ytdl_ie_name_cls_map = {
         get_ie_name(ie_cls): ie_cls for ie_cls in ytdl_extractors}
     generic_extractor = ytdl_extractors[-1]
     append_generic_extractor = False
     enabled_extractors = []
-    ie_key_cls_map = {}
     for name in names:
         if name == ':builtins:':
             extractors = ytdl_extractors[:-1]
@@ -34,12 +34,11 @@ def enable_extractors(names):
             except KeyError:
                 raise DLPlusException(f'unknown built-in extractor: {name}')
         enabled_extractors.extend(extractors)
-        ie_key_cls_map.update(
-            (ie_cls.ie_key(), ie_cls) for ie_cls in extractors)
     if append_generic_extractor:
         enabled_extractors.append(generic_extractor)
-        ie_key_cls_map[generic_extractor.ie_key()] = generic_extractor
+    ie_key_cls_map = {
+        extractor.ie_key(): extractor for extractor in enabled_extractors}
     ytdl_extractor_module.gen_extractor_classes = lambda: enabled_extractors
     ytdl_extractor_module.get_info_extractor = (
         lambda ie_key: ie_key_cls_map[ie_key])
-    importlib.reload(importlib.import_module('youtube_dl.YoutubeDL'))
+    importlib.reload(ytdl.import_module('YoutubeDL'))

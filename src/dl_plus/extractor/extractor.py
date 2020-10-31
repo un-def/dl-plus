@@ -1,6 +1,10 @@
 from typing import Optional
 
-from youtube_dl.extractor.common import InfoExtractor
+from dl_plus import ytdl
+
+
+InfoExtractor = ytdl.import_from('extractor.common', 'InfoExtractor')
+ExtractorError = ytdl.import_from('utils', 'ExtractorError')
 
 
 class Extractor(InfoExtractor):
