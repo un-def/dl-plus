@@ -51,12 +51,18 @@ def _main(argv):
         formatter_class=argparse.RawTextHelpFormatter,
         parents=[pre_parser],
     )
-    parser.add_argument(
+    extractor_group = parser.add_mutually_exclusive_group()
+    extractor_group.add_argument(
         '-E', '--extractor',
         action='append',
         help=_dedent("""
             Extractor name. Can be specified multiple times: -E foo -E bar.
         """),
+    )
+    extractor_group.add_argument(
+        '--force-generic-extractor',
+        action='store_true',
+        help=argparse.SUPPRESS,
     )
     parser.add_argument(
         '-h', '--help',
@@ -64,11 +70,14 @@ def _main(argv):
         help=argparse.SUPPRESS,
     )
     parsed_args, ytdl_args = parser.parse_known_args(argv)
-    ie_names = parsed_args.extractor
-    if not ie_names:
-        ie_names = [':builtins:', ':plugins:']
-    from .core import enable_extractors
-    enable_extractors(ie_names)
+    if parsed_args.force_generic_extractor:
+        ytdl_args.append('--force-generic-extractor')
+    else:
+        extractors = parsed_args.extractor
+        if not extractors:
+            extractors = [':builtins:', ':plugins:']
+        from .core import enable_extractors
+        enable_extractors(extractors)
     ytdl.run(ytdl_args)
 
 
