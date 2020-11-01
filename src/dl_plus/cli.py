@@ -75,7 +75,7 @@ def _main(argv):
     else:
         extractors = parsed_args.extractor
         if not extractors:
-            extractors = [':builtins:', ':plugins:']
+            extractors = [':builtins:', ':plugins:', 'generic']
         from .core import enable_extractors
         enable_extractors(extractors)
     ytdl.run(ytdl_args)
