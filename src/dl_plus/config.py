@@ -1,7 +1,7 @@
 import os
 from configparser import ConfigParser
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 from .exceptions import DLPlusException
 
@@ -22,7 +22,13 @@ class ConfigError(DLPlusException):
     pass
 
 
-def get_config_dir_default_path() -> Path:
+_config_dir_path: Optional[Path] = None
+
+
+def get_config_dir_path() -> Path:
+    global _config_dir_path
+    if _config_dir_path:
+        return _config_dir_path
     if os.name == 'nt':
         app_data = os.getenv('AppData')
         if app_data:
@@ -35,7 +41,9 @@ def get_config_dir_default_path() -> Path:
             parent = Path(xdg_config_home)
         else:
             parent = Path.home() / '.config'
-    return parent / 'dl-plus'
+    path = parent / 'dl-plus'
+    _config_dir_path = path
+    return path
 
 
 class _Config(ConfigParser):
@@ -64,7 +72,7 @@ class Config(_Config):
 
     def load(self, path: Union[Path, str, None] = None) -> None:
         if not path:
-            path = get_config_dir_default_path() / 'config.ini'
+            path = get_config_dir_path() / 'config.ini'
             if not path.is_file():
                 return
         else:

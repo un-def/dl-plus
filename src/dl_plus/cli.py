@@ -2,7 +2,7 @@ import argparse
 import sys
 from textwrap import dedent
 
-from . import ytdl
+from . import core, ytdl
 from .config import Config
 from .const import DL_PLUS_VERSION
 from .exceptions import DLPlusException
@@ -51,11 +51,8 @@ def _main(argv):
     if not parsed_pre_args.no_dlp_config:
         config.load(parsed_pre_args.dlp_config)
 
-    ytdl_module_name = parsed_pre_args.backend
-    if not ytdl_module_name:
-        ytdl_module_name = config['main']['backend']
-    ytdl_module_name = ytdl_module_name.replace('-', '_')
-    ytdl.init(ytdl_module_name)
+    backend = parsed_pre_args.backend or config['main']['backend']
+    core.init_backend(backend)
 
     parser = _ArgParser(
         prog='dl-plus',
@@ -98,8 +95,7 @@ def _main(argv):
         extractors = parsed_args.extractor
         if not extractors:
             extractors = config.options('extractors.enable')
-        from .core import enable_extractors
-        enable_extractors(extractors)
+        core.enable_extractors(extractors)
     ytdl.run(ytdl_args)
 
 
