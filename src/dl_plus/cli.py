@@ -35,7 +35,7 @@ def _main(argv):
         help='do not read dl-plus config.',
     )
     pre_parser.add_argument(
-        '--ytdl-backend',
+        '--backend',
         metavar='BACKEND',
         help='youtube-dl backend.',
     )
@@ -51,9 +51,9 @@ def _main(argv):
     if not parsed_pre_args.no_dlp_config:
         config.load(parsed_pre_args.dlp_config)
 
-    ytdl_module_name = parsed_pre_args.ytdl_backend
+    ytdl_module_name = parsed_pre_args.backend
     if not ytdl_module_name:
-        ytdl_module_name = config['main']['ytdl-backend']
+        ytdl_module_name = config['main']['backend']
     ytdl_module_name = ytdl_module_name.replace('-', '_')
     ytdl.init(ytdl_module_name)
 

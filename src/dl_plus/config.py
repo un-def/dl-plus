@@ -8,7 +8,7 @@ from .exceptions import DLPlusException
 
 DEFAULT_CONFIG = """
 [main]
-ytdl-backend = youtube-dl
+backend = youtube-dl
 
 [extractors.enable]
 :builtins:
