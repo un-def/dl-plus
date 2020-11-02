@@ -38,7 +38,7 @@ def get_config_dir_default_path() -> Path:
     return parent / 'dl-plus'
 
 
-class Config(ConfigParser):
+class _Config(ConfigParser):
 
     def __init__(self) -> None:
         super().__init__(
@@ -51,6 +51,15 @@ class Config(ConfigParser):
             default_section=None,
             interpolation=None,
         )
+
+
+class Config(_Config):
+
+    _UPDATE_SECTIONS = ('main',)
+    _REPLACE_SECTIONS = ('extractors.enable',)
+
+    def __init__(self) -> None:
+        super().__init__()
         self.read_string(DEFAULT_CONFIG)
 
     def load(self, path: Union[Path, str, None] = None) -> None:
@@ -64,8 +73,23 @@ class Config(ConfigParser):
             if not path.is_file():
                 raise ConfigError(
                     f'failed to load config: {path} is not a file')
+        config = _Config()
         try:
             with open(path) as fobj:
-                self.read_file(fobj)
+                config.read_file(fobj)
         except OSError as exc:
             raise ConfigError(f'failed to load config: {exc}') from exc
+        for section in self._UPDATE_SECTIONS:
+            self._load_section(section, config, replace=False)
+        for section in self._REPLACE_SECTIONS:
+            self._load_section(section, config, replace=True)
+
+    def _load_section(self, name: str, config: _Config, replace: bool) -> None:
+        if not config.has_section(name):
+            return
+        if not self.has_section(name):
+            self.add_section(name)
+        section = self[name]
+        if replace:
+            section.clear()
+        section.update(config[name])
