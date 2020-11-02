@@ -3,6 +3,7 @@ import sys
 from textwrap import dedent
 
 from . import ytdl
+from .config import Config
 from .exceptions import DLPlusException
 
 
@@ -21,18 +22,32 @@ class _ArgParser(argparse.ArgumentParser):
 
 def _main(argv):
     pre_parser = argparse.ArgumentParser(add_help=False)
+    dlp_config_group = pre_parser.add_mutually_exclusive_group()
+    dlp_config_group.add_argument(
+        '--dlp-config',
+        metavar='PATH',
+        help='dl-plus config path.',
+    )
+    dlp_config_group.add_argument(
+        '--no-dlp-config',
+        action='store_true',
+        help='do not read dl-plus config.',
+    )
     pre_parser.add_argument(
-        '--ytdl-module',
-        metavar='MODULE',
-        help='youtube-dl module import path.',
+        '--ytdl-backend',
+        metavar='BACKEND',
+        help='youtube-dl backend.',
     )
     parsed_pre_args, _ = pre_parser.parse_known_args(argv)
 
-    ytdl_module_name = parsed_pre_args.ytdl_module
+    config = Config()
+    if not parsed_pre_args.no_dlp_config:
+        config.load(parsed_pre_args.dlp_config)
+
+    ytdl_module_name = parsed_pre_args.ytdl_backend
     if not ytdl_module_name:
-        ytdl_module_name = 'youtube_dl'
-    else:
-        ytdl_module_name = ytdl_module_name.replace('-', '_')
+        ytdl_module_name = config['main']['ytdl-backend']
+    ytdl_module_name = ytdl_module_name.replace('-', '_')
     ytdl.init(ytdl_module_name)
 
     parser = _ArgParser(
@@ -75,7 +90,7 @@ def _main(argv):
     else:
         extractors = parsed_args.extractor
         if not extractors:
-            extractors = [':builtins:', ':plugins:', 'generic']
+            extractors = config.options('extractors.enable')
         from .core import enable_extractors
         enable_extractors(extractors)
     ytdl.run(ytdl_args)
