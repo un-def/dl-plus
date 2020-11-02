@@ -4,6 +4,7 @@ from textwrap import dedent
 
 from . import ytdl
 from .config import Config
+from .const import DL_PLUS_VERSION
 from .exceptions import DLPlusException
 
 
@@ -37,6 +38,12 @@ def _main(argv):
         '--ytdl-backend',
         metavar='BACKEND',
         help='youtube-dl backend.',
+    )
+    pre_parser.add_argument(
+        '--dlp-version',
+        action='version',
+        version=DL_PLUS_VERSION,
+        help='print dl-plus version and exit',
     )
     parsed_pre_args, _ = pre_parser.parse_known_args(argv)
 
