@@ -114,6 +114,9 @@ class ExtractorPlugin:
                 f'the extractor {extractor_cls!r} is already registered '
                 f'as "{peqn}"'
             )
+        if extractor_cls.IE_NAME is not None:
+            raise ExtractorPluginError(
+                f'the extractor {extractor_cls!r} has non-None IE_NAME value')
         if name and name in self._extractors:
             raise ExtractorPluginError(
                 f'the plugin already contains an extractor called "{name}"')

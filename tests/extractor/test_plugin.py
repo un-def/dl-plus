@@ -95,6 +95,12 @@ class TestRegister:
         with pytest.raises(ExtractorPluginError, match='subclass expected'):
             self.plugin.register(extractor)
 
+    def test_error_ie_name_is_set(self):
+        extractor = create_extractor()
+        extractor.IE_NAME = 'clip'
+        with pytest.raises(ExtractorPluginError, match='non-None IE_NAME'):
+            self.plugin.register(extractor)
+
     def test_error_already_registered_same_plugin(self):
         extractor = create_extractor()
         self.plugin.register(extractor, name='quux')
