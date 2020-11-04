@@ -61,9 +61,6 @@ def enable_extractors(names):
         elif '/' in name:
             extractors = load_extractors_by_peqn(name)
         else:
-            try:
-                extractors = [ytdl.get_extractor_by_name(name)]
-            except KeyError:
-                raise DLPlusException(f'unknown built-in extractor: {name}')
+            extractors = ytdl.get_extractors_by_name(name)
         enabled_extractors.extend(extractors)
     ytdl.patch_extractors(enabled_extractors)
