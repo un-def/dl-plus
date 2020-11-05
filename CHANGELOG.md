@@ -10,7 +10,7 @@
 ### Changes
 
   * The generic extractor is no longer included in the `:builtins:` list. That is, one should use `-E :builtins: -E generic` to get **all** built-in extractors.
-  * Built-in extactors are now grouped by their names splitted by semicolon. For example, `-E twitch` is now expanded to a list of all `twitch:*` extractors (previously, one should specify each `twitch:*` extractor manually: `-E twitch:stream -E twitch:vod -E ...`).
+  * Built-in extactors are now grouped by their names splitted by colons. For example, `-E twitch` is now expanded to a list of all `twitch:*` extractors (previously, one should specify each `twitch:*` extractor manually: `-E twitch:stream -E twitch:vod -E ...`).
 
 ### Fixes
 
