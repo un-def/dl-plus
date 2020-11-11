@@ -1,3 +1,4 @@
+import re
 from typing import Optional
 
 from dl_plus import ytdl
@@ -18,3 +19,12 @@ class Extractor(InfoExtractor):
     @classmethod
     def ie_key(cls):
         return cls.IE_NAME
+
+    # dl-plus extra methods
+
+    @classmethod
+    def dlp_match(cls, url: str) -> Optional[re.Match]:
+        # a copy/paste from youtube-dl
+        if '_VALID_URL_RE' not in cls.__dict__:
+            cls._VALID_URL_RE = re.compile(cls._VALID_URL)
+        return cls._VALID_URL_RE.match(url)
