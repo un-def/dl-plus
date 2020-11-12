@@ -1,16 +1,21 @@
 from functools import partial
-from typing import Callable, Dict, List, Optional, Type, Union, cast, overload
+from typing import (
+    TYPE_CHECKING, Callable, Dict, List, Optional, Type, Union, cast, overload,
+)
 
 from dl_plus.exceptions import DLPlusException
 
-from .extractor import Extractor
 from .peqn import PEQN
+
+
+if TYPE_CHECKING:
+    from .extractor import Extractor
 
 
 EXTRACTOR_PEQN_ATTR = '_dl_plus_peqn'
 
 
-ExtractorType = Type[Extractor]
+ExtractorType = Type['Extractor']
 RegisterDecoratorType = Callable[[ExtractorType], ExtractorType]
 
 
@@ -102,6 +107,7 @@ class ExtractorPlugin:
     def _register(
         self, extractor_cls: ExtractorType, name: Optional[str],
     ) -> ExtractorType:
+        from .extractor import Extractor
         if not issubclass(extractor_cls, Extractor):
             raise ExtractorPluginError(
                 f'Extractor subclass expected, got: {extractor_cls!r}')
