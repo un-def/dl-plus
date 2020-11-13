@@ -7,8 +7,8 @@ from dl_plus.extractor import Extractor
 from dl_plus.extractor.plugin import ExtractorPlugin, ExtractorPluginError
 
 
-def create_extractor(base=None):
-    return type('TestExtractor', (base or Extractor,), {})
+def create_extractor(__base=None, **attrs):
+    return type('TestExtractor', (__base or Extractor,), attrs)
 
 
 def create_plugin(ns=None, plugin=None):
@@ -89,15 +89,38 @@ class TestRegister:
         self.plugin.register(extractor, name='quux')
         assert extractor.IE_NAME == f'{self.NS}/{self.PLUGIN}:quux'
 
+    @pytest.mark.parametrize('base,rel,expected', [
+        ('foo://bar/', 'baz', 'foo://bar/baz'),
+        ('foo://bar/', '/baz', 'foo://bar//baz'),
+        ('foo://bar', 'baz', 'foo://barbaz'),
+    ])
+    def test_dlp_url(self, base, rel, expected):
+        extractor_base = create_extractor(DLP_BASE_URL=base)
+        extractor = create_extractor(extractor_base, DLP_REL_URL=rel)
+        self.plugin.register(extractor)
+        assert extractor._VALID_URL == expected
+
+    def test_error_dlp_rel_url_without_base_url(self):
+        extractor_base = create_extractor()
+        extractor = create_extractor(extractor_base, DLP_REL_URL='baz')
+        with pytest.raises(ExtractorPluginError, match='without DLP_BASE_URL'):
+            self.plugin.register(extractor)
+
+    def test_error_dlp_rel_url_and_valid_url_conflict(self):
+        extractor_base = create_extractor(DLP_BASE_URL='foo://bar/')
+        extractor = create_extractor(
+            extractor_base, DLP_REL_URL='baz', _VALID_URL='qux://quux')
+        with pytest.raises(ExtractorPluginError, match='mutually exclusive'):
+            self.plugin.register(extractor)
+
     def test_error_bad_superclass(self):
         from youtube_dl.extractor.common import InfoExtractor
-        extractor = create_extractor(base=InfoExtractor)
+        extractor = create_extractor(InfoExtractor)
         with pytest.raises(ExtractorPluginError, match='subclass expected'):
             self.plugin.register(extractor)
 
     def test_error_ie_name_is_set(self):
-        extractor = create_extractor()
-        extractor.IE_NAME = 'clip'
+        extractor = create_extractor(IE_NAME='clip')
         with pytest.raises(ExtractorPluginError, match='non-None IE_NAME'):
             self.plugin.register(extractor)
 

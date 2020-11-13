@@ -20,7 +20,10 @@ class Extractor(InfoExtractor):
     def ie_key(cls):
         return cls.IE_NAME
 
-    # dl-plus extra methods
+    # dl-plus extra attributes/methods
+
+    DLP_BASE_URL: Optional[str] = None
+    DLP_REL_URL: Optional[str] = None
 
     @classmethod
     def dlp_match(cls, url: str) -> Optional[Match[str]]:

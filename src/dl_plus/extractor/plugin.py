@@ -128,9 +128,24 @@ class ExtractorPlugin:
                 f'the plugin already contains an extractor called "{name}"')
         if name and None in self._extractors or not name and self._extractors:
             raise ExtractorPluginError(
-                'the unnamed extractor must be the only extractor '
-                'in the plugin'
+                f'{extractor_cls!r}: the unnamed extractor must be '
+                f'the only extractor in the plugin'
             )
+        if 'DLP_REL_URL' in extractor_cls.__dict__:   # type: ignore
+            rel_url = extractor_cls.DLP_REL_URL
+            if not rel_url:
+                raise ExtractorPluginError(
+                    f'{extractor_cls!r}: DLP_REL_URL is not set')
+            base_url = extractor_cls.DLP_BASE_URL
+            if not base_url:
+                raise ExtractorPluginError(
+                    f'{extractor_cls!r}: DLP_REL_URL without DLP_BASE_URL')
+            if '_VALID_URL' in extractor_cls.__dict__:   # type: ignore
+                raise ExtractorPluginError(
+                    f'{extractor_cls!r}: DLP_REL_URL and _VALID_URL '
+                    f'are mutually exclusive'
+                )
+            extractor_cls._VALID_URL = base_url + rel_url
         peqn = self._base_peqn.copy(name=name)
         setattr(extractor_cls, EXTRACTOR_PEQN_ATTR, peqn)
         extractor_cls.IE_NAME = str(peqn)
