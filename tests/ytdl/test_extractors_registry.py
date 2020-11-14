@@ -1,19 +1,7 @@
 import pytest
 
 from dl_plus import ytdl
-
-
-class EM:
-    """Extractor Mock"""
-
-    def __init__(self, name):
-        self.IE_NAME = name
-
-    def __repr__(self):
-        return f'<EM: {self.IE_NAME}>'
-
-    def __eq__(self, other):
-        return self.IE_NAME == other.IE_NAME
+from tests.testlib import ExtractorMock as EM
 
 
 @pytest.fixture(autouse=True)
