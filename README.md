@@ -68,7 +68,7 @@ See [docs/extractor-plugin-authoring-guide.md](https://github.com/un-def/dl-plus
 
 ## Available Extractor Plugins
 
-See [docs/available-extactor-plugins.md](https://github.com/un-def/dl-plus/blob/master/docs/available-extactor-plugins.md).
+See [docs/available-extractor-plugins.md](https://github.com/un-def/dl-plus/blob/master/docs/available-extractor-plugins.md).
 
 ## License
 
