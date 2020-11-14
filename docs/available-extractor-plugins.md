@@ -1,6 +1,8 @@
 # Available Extractor Plugins
 
-This is a list of the extractor plugins known to/recommended by the `dl-plus` developers. Try searching for “dl-plus-extractor” on PyPI/GitHub/GitLab/etc. to get more plugins, but remember — this is at your own risk.
+This is a list of the extractor plugins known to/recommended by the `dl-plus` developers.
+
+Try searching for `dl-plus-extractor` on [PyPI](https://pypi.org/search/?q=dl-plus-extractor)/[GitHub](https://github.com/search?q=dl-plus-extractor)/[GitLab](https://gitlab.com/explore/projects?name=dl-plus-extractor)/etc. to get more plugins, but remember — this is at your own risk.
 
 | Service | Plugin Name | Plugin Package |
 | --- | --- | --- |
