@@ -120,3 +120,8 @@
     ```
 
     The same name should be used for the project's public repository.
+
+
+[un1def-wasdtv-extractor-repo]: https://github.com/un-def/dl-plus-extractor-un1def-wasdtv
+[pypi-website]: https://pypi.org/
+[youtube-dl-extractor-guide]: https://web.archive.org/web/20201019114817if_/https://github.com/ytdl-org/youtube-dl#adding-support-for-a-new-site

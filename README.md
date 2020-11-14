@@ -76,9 +76,6 @@ The [MIT License][license].
 
 
 [youtube-dl-website]: https://youtube-dl.org/
-[youtube-dl-extractor-guide]: https://web.archive.org/web/20201019114817if_/https://github.com/ytdl-org/youtube-dl#adding-support-for-a-new-site
 [pipx-website]: https://pipxproject.github.io/pipx/
 [mpv-website]: https://mpv.io/
-[pypi-website]: https://pypi.org/
-[un1def-wasdtv-extractor-repo]: https://github.com/un-def/dl-plus-extractor-un1def-wasdtv
 [license]: https://github.com/un-def/dl-plus/blob/master/LICENSE
