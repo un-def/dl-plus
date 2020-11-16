@@ -1,4 +1,5 @@
 import argparse
+import os.path
 import sys
 from textwrap import dedent
 
@@ -15,13 +16,17 @@ def _dedent(text):
     return dedent(text).strip()
 
 
+def _is_running_as_youtube_dl(program_name: str) -> bool:
+    return os.path.basename(program_name) in ['youtube-dl', 'youtube-dl.exe']
+
+
 class _ArgParser(argparse.ArgumentParser):
 
     def format_help(self):
         return super().format_help() + ytdl.get_help()
 
 
-def _main(argv):
+def _get_pre_parser() -> argparse.ArgumentParser:
     pre_parser = argparse.ArgumentParser(add_help=False)
     dlp_config_group = pre_parser.add_mutually_exclusive_group()
     dlp_config_group.add_argument(
@@ -45,15 +50,10 @@ def _main(argv):
         version=DL_PLUS_VERSION,
         help='print dl-plus version and exit',
     )
-    parsed_pre_args, _ = pre_parser.parse_known_args(argv)
+    return pre_parser
 
-    config = Config()
-    if not parsed_pre_args.no_dlp_config:
-        config.load(parsed_pre_args.dlp_config)
 
-    backend = parsed_pre_args.backend or config['main']['backend']
-    core.init_backend(backend)
-
+def _get_parser(parent: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser = _ArgParser(
         prog='dl-plus',
         usage=(
@@ -68,7 +68,7 @@ def _main(argv):
         epilog='The following are youtube-dl options:',
         add_help=False,
         formatter_class=argparse.RawTextHelpFormatter,
-        parents=[pre_parser],
+        parents=[parent],
     )
     extractor_group = parser.add_mutually_exclusive_group()
     extractor_group.add_argument(
@@ -88,11 +88,37 @@ def _main(argv):
         action='help',
         help=argparse.SUPPRESS,
     )
-    parsed_args, ytdl_args = parser.parse_known_args(argv)
-    if parsed_args.force_generic_extractor:
+    return parser
+
+
+def _main(argv):
+    compat_mode = _is_running_as_youtube_dl(argv[0])
+    args = argv[1:]
+    config = Config()
+    backend = None
+    if not compat_mode:
+        pre_parser = _get_pre_parser()
+        parsed_pre_args, _ = pre_parser.parse_known_args(args)
+        if not parsed_pre_args.no_dlp_config:
+            config.load(parsed_pre_args.dlp_config)
+        backend = parsed_pre_args.backend
+    else:
+        config.load()
+    if not backend:
+        backend = config['main']['backend']
+    core.init_backend(backend)
+    force_generic_extractor = False
+    extractors = None
+    if not compat_mode:
+        parser = _get_parser(parent=pre_parser)
+        parsed_args, ytdl_args = parser.parse_known_args(args)
+        force_generic_extractor = parsed_args.force_generic_extractor
+        extractors = parsed_args.extractor
+    else:
+        ytdl_args = args
+    if force_generic_extractor:
         ytdl_args.append('--force-generic-extractor')
     else:
-        extractors = parsed_args.extractor
         if not extractors:
             extractors = config.options('extractors.enable')
         core.enable_extractors(extractors)
@@ -100,6 +126,8 @@ def _main(argv):
 
 
 def main(argv=None):
+    if argv is None:
+        argv = sys.argv
     try:
         _main(argv)
     except DLPlusException as exc:

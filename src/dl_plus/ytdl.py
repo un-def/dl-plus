@@ -52,7 +52,7 @@ def run(args):
     global _ytdl_module_name
     orig_sys_argv = sys.argv
     try:
-        sys.argv = [_ytdl_module_name, *args]
+        sys.argv = [_ytdl_module_name.replace('_', '-'), *args]
         _ytdl_module.main()
     finally:
         sys.argv = orig_sys_argv
