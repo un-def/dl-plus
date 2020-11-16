@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 (unreleased)
+
+### Features
+
+  * `youtube-dl`–compatible mode. When `dl-plus` is run as `youtube-dl` (e.g., via a symlink), it disables all additional command line options. The config file is still processed.
+
 ## 0.3.0
 
 ### Features
@@ -13,7 +19,7 @@
 
   * Remove duplicates when expanding the extractor list from the config (`[extractors.enable]`) or the command line arguments (`--extractor`). For example, `-E twitch:vod -E twitch` will no longer include the `twitch:vod` extractor twice.
 
-### Internals
+### Internal Changes
 
   * `dl_plus.extractor.Extractor` and `dl_plus.extractor.ExtractorError` are now loaded lazily. It is now possible to import modules from the `dl_plus.extractor` package without first initializing `dl_plus.ytdl`.
 
