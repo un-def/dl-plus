@@ -4,7 +4,12 @@
 
 ### Features
 
+  * A new optional `[backend-options]` config section. The section has exactly the same format as the `youtube-dl` config (one can think of it as the `youtube-dl` config embedded into the `dl-plus` one). If this section is present, even if it is empty, it overrides `youtube-dl` own config(s) (`--ignore-config` is used internally).
   * `youtube-dl`–compatible mode. When `dl-plus` is run as `youtube-dl` (e.g., via a symlink), it disables all additional command line options. The config file is still processed.
+
+### Improvements
+
+  * `-U`/`--update` is now handled by `dl-plus` itself rather than passing it to the underlying backend. For now, it says that this feature is not yet implemented (and it is not).
 
 ## 0.3.0
 
