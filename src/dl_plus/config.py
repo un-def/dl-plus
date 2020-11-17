@@ -1,7 +1,9 @@
+import itertools
 import os
+import shlex
 from configparser import ConfigParser
 from pathlib import Path
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 from .exceptions import DLPlusException
 
@@ -64,7 +66,7 @@ class _Config(ConfigParser):
 class Config(_Config):
 
     _UPDATE_SECTIONS = ('main',)
-    _REPLACE_SECTIONS = ('extractors.enable',)
+    _REPLACE_SECTIONS = ('extractors.enable', 'backend-options')
 
     def __init__(self) -> None:
         super().__init__()
@@ -101,3 +103,9 @@ class Config(_Config):
         if replace:
             section.clear()
         section.update(config[name])
+
+    def get_backend_options(self) -> Optional[List[str]]:
+        if 'backend-options' not in self:
+            return None
+        return list(itertools.chain.from_iterable(
+            map(shlex.split, self.options('backend-options'))))

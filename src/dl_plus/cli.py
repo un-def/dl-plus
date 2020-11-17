@@ -122,6 +122,9 @@ def _main(argv):
         if not extractors:
             extractors = config.options('extractors.enable')
         core.enable_extractors(extractors)
+    backend_options = config.get_backend_options()
+    if backend_options is not None:
+        ytdl_args = ['--ignore-config'] + backend_options + ytdl_args
     ytdl.run(ytdl_args)
 
 
