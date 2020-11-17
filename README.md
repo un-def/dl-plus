@@ -56,11 +56,19 @@ A [youtube-dl][youtube-dl-website] extension with pluggable extractors
 
 4.  (optional) Create `dl-plus` → `youtube-dl` symlink (for apps relying on `youtube-dl` executable in `PATH`, e.g., [mpv][mpv-website]):
 
-    ```
-    dlp=$(command -v dl-plus 2>&1) && ln -s "$dlp" "$(dirname "$dlp")/youtube-dl"
-    ```
+    - **\*nix**:
 
-    Use `ln -sf` instead of `ln -s` to overwrite an existing `youtube-dl` executable.
+      ```shell
+      dlp=$(command -v dl-plus 2>&1) && ln -s "$dlp" "$(dirname "$dlp")/youtube-dl"
+      ```
+
+      Use `ln -sf` instead of `ln -s` to overwrite an existing `youtube-dl` executable.
+
+    - **Windows** (PowerShell, requires administrative privileges):
+
+      ```powershell
+      $dlp = (Get-Command -ErrorAction:Stop dl-plus).Path; New-Item -ItemType SymbolicLink -Path ((Get-Item $dlp).Directory.FullName + "\youtube-dl.exe") -Target $dlp
+      ```
 
 ## Extractor Plugin Authoring Guide
 
