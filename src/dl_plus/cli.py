@@ -26,38 +26,25 @@ class _ArgParser(argparse.ArgumentParser):
         return super().format_help() + ytdl.get_help()
 
 
-def _get_pre_parser() -> argparse.ArgumentParser:
-    pre_parser = argparse.ArgumentParser(add_help=False)
-    dlp_config_group = pre_parser.add_mutually_exclusive_group()
-    dlp_config_group.add_argument(
-        '--dlp-config',
-        metavar='PATH',
-        help='dl-plus config path.',
-    )
-    dlp_config_group.add_argument(
-        '--no-dlp-config',
+def _get_common_parser() -> argparse.ArgumentParser:
+    """The common parser is used in both compat and dl-plus modes"""
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument(
+        '-U', '--update',
         action='store_true',
-        help='do not read dl-plus config.',
+        help=argparse.SUPPRESS,
     )
-    pre_parser.add_argument(
-        '--backend',
-        metavar='BACKEND',
-        help='youtube-dl backend.',
-    )
-    pre_parser.add_argument(
-        '--dlp-version',
-        action='version',
-        version=DL_PLUS_VERSION,
-        help='print dl-plus version and exit',
-    )
-    return pre_parser
+    return parser
 
 
-def _get_parser(parent: argparse.ArgumentParser) -> argparse.ArgumentParser:
+def _get_parser() -> argparse.ArgumentParser:
+    """This parser is used in dl-plus mode only"""
     parser = _ArgParser(
         prog='dl-plus',
         usage=(
-            '%(prog)s [--extractor EXTRACTOR] [--ytdl-module MODULE] '
+            '%(prog)s '
+            '[--dlp-config PATH | --no-dlp-config] '
+            '[--backend BACKEND] [--extractor EXTRACTOR] '
             '[YOUTUBE-DL OPTIONS] URL [URL...]'
         ),
         description=_dedent("""
@@ -68,7 +55,28 @@ def _get_parser(parent: argparse.ArgumentParser) -> argparse.ArgumentParser:
         epilog='The following are youtube-dl options:',
         add_help=False,
         formatter_class=argparse.RawTextHelpFormatter,
-        parents=[parent],
+    )
+    dlp_config_group = parser.add_mutually_exclusive_group()
+    dlp_config_group.add_argument(
+        '--dlp-config',
+        metavar='PATH',
+        help='dl-plus config path.',
+    )
+    dlp_config_group.add_argument(
+        '--no-dlp-config',
+        action='store_true',
+        help='do not read dl-plus config.',
+    )
+    parser.add_argument(
+        '--dlp-version',
+        action='version',
+        version=DL_PLUS_VERSION,
+        help='print dl-plus version and exit',
+    )
+    parser.add_argument(
+        '--backend',
+        metavar='BACKEND',
+        help='youtube-dl backend.',
     )
     extractor_group = parser.add_mutually_exclusive_group()
     extractor_group.add_argument(
@@ -85,24 +93,28 @@ def _get_parser(parent: argparse.ArgumentParser) -> argparse.ArgumentParser:
     )
     parser.add_argument(
         '-h', '--help',
-        action='help',
+        action='store_true',
         help=argparse.SUPPRESS,
     )
     return parser
 
 
 def _main(argv):
+    common_parser = _get_common_parser()
+    parsed_common_args, args = common_parser.parse_known_args(argv[1:])
+    if parsed_common_args.update:
+        raise DLPlusException('update is not yet supported')
     compat_mode = _is_running_as_youtube_dl(argv[0])
-    args = argv[1:]
     config = Config()
     backend = None
     if not compat_mode:
-        pre_parser = _get_pre_parser()
-        parsed_pre_args, _ = pre_parser.parse_known_args(args)
-        if not parsed_pre_args.no_dlp_config:
-            config.load(parsed_pre_args.dlp_config)
-        backend = parsed_pre_args.backend
+        parser = _get_parser()
+        parsed_args, ytdl_args = parser.parse_known_args(args)
+        backend = parsed_args.backend
+        if not parsed_args.no_dlp_config:
+            config.load(parsed_args.dlp_config)
     else:
+        ytdl_args = args
         config.load()
     if not backend:
         backend = config['main']['backend']
@@ -110,12 +122,11 @@ def _main(argv):
     force_generic_extractor = False
     extractors = None
     if not compat_mode:
-        parser = _get_parser(parent=pre_parser)
-        parsed_args, ytdl_args = parser.parse_known_args(args)
+        if parsed_args.help:
+            parser.print_help()
+            return
         force_generic_extractor = parsed_args.force_generic_extractor
         extractors = parsed_args.extractor
-    else:
-        ytdl_args = args
     if force_generic_extractor:
         ytdl_args.append('--force-generic-extractor')
     else:
