@@ -1,4 +1,4 @@
-from dl_plus.cli.command import CommandGroup
+from dl_plus.cli.commands.base import CommandGroup
 
 from .info import BackendInfoCommand
 

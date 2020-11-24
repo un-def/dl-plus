@@ -1,48 +1,14 @@
 import argparse
-from functools import reduce
-from textwrap import dedent
+from typing import List
+
+from .commands import RootCommandGroup
+from .commands.base import CommandGroup
+
+
+__all__ = ['run_command']
 
 
 _COMMAND_DEST = 'command'
-
-
-class _CommandBase(object):
-
-    def __init_subclass__(cls):
-        dct = cls.__dict__
-        if 'name' not in dct:
-            setattr(cls, 'name', dct['__module__'].rpartition('.')[-1])
-        long_description = dct.get('long_description')
-        if long_description:
-            long_description = dedent(long_description).rstrip() + '\n',
-            setattr(cls, 'long_description', long_description)
-
-
-class Command(_CommandBase):
-
-    name = None
-    short_description = None
-    long_description = None
-    args = ()
-
-    def run(self, args: argparse.Namespace) -> None:
-        raise NotImplementedError
-
-
-class CommandGroup(_CommandBase):
-
-    name = None
-    short_description = None
-    long_description = None
-    commands = ()
-
-    def __init_subclass__(cls):
-        super().__init_subclass__()
-        cls._commands = {cmd.name: cmd for cmd in cls.commands}
-
-    @classmethod
-    def get_command(cls, command_path):
-        return reduce(lambda c, p: c._commands[p], command_path, cls)
 
 
 class CommandNamespace(argparse.Namespace):
@@ -60,18 +26,6 @@ class CommandNamespace(argparse.Namespace):
     command = property(_get_command, _set_command)
 
 
-class Arg(object):
-
-    __slots__ = ['args', 'kwargs']
-
-    def __init__(self, *args, **kwargs):
-        self.args = args
-        self.kwargs = kwargs
-
-    def add_to_parser(self, parser):
-        return parser.add_argument(*self.args, **self.kwargs)
-
-
 class CommandArgParser(argparse.ArgumentParser):
 
     def __init__(self, *args, **kwargs):
@@ -79,8 +33,8 @@ class CommandArgParser(argparse.ArgumentParser):
             'formatter_class', argparse.RawDescriptionHelpFormatter)
         super().__init__(*args, **kwargs)
 
-    def add_command_args(self, command):
-        for arg in command.args:
+    def add_command_arguments(self, command):
+        for arg in command.arguments:
             arg.add_to_parser(self)
 
     def add_command_group(self, command_group):
@@ -99,7 +53,7 @@ class CommandArgParser(argparse.ArgumentParser):
             if issubclass(command_or_group, CommandGroup):
                 command_parser.add_command_group(command_or_group)
             else:
-                command_parser.add_command_args(command_or_group)
+                command_parser.add_command_arguments(command_or_group)
 
     def add_command_group_subparsers(self, *args, **kwargs):
         kwargs.setdefault('dest', _COMMAND_DEST)
@@ -109,3 +63,13 @@ class CommandArgParser(argparse.ArgumentParser):
         subparsers = self.add_subparsers(*args, **kwargs)
         subparsers.required = True
         return subparsers
+
+
+def run_command(prog: str, cmd_arg: str, args: List[str]) -> None:
+    parser = CommandArgParser(prog=f'{prog} {cmd_arg}')
+    parser.add_argument(
+        cmd_arg, action='store_true', required=True, help=argparse.SUPPRESS)
+    parser.add_command_group(RootCommandGroup)
+    parsed_args = parser.parse_args(args, namespace=CommandNamespace())
+    command_cls = RootCommandGroup.get_command(parsed_args.command)
+    command_cls(parsed_args).run()

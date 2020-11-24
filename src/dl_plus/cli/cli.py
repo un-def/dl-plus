@@ -2,12 +2,13 @@ import argparse
 import os.path
 import sys
 from textwrap import dedent
-from typing import List
 
 from dl_plus import core, ytdl
 from dl_plus.config import Config
 from dl_plus.const import DL_PLUS_VERSION
 from dl_plus.exceptions import DLPlusException
+
+from . import args
 
 
 __all__ = ['main']
@@ -48,17 +49,7 @@ def _get_main_parser() -> argparse.ArgumentParser:
         add_help=False,
         formatter_class=argparse.RawTextHelpFormatter,
     )
-    dlp_config_group = parser.add_mutually_exclusive_group()
-    dlp_config_group.add_argument(
-        '--dlp-config',
-        metavar='PATH',
-        help='dl-plus config path.',
-    )
-    dlp_config_group.add_argument(
-        '--no-dlp-config',
-        action='store_true',
-        help='do not read dl-plus config.',
-    )
+    args.dlp_config.add_to_parser(parser)
     parser.add_argument(
         '--dlp-version',
         action='version',
@@ -91,18 +82,6 @@ def _get_main_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _run_command(args: List[str]) -> None:
-    from .command import CommandArgParser, CommandNamespace
-    from .commands import RootCommandGroup
-    parser = CommandArgParser(prog=f'{_PROG} {_CMD}')
-    parser.add_argument(
-        _CMD, action='store_true', required=True, help=argparse.SUPPRESS)
-    parser.add_command_group(RootCommandGroup)
-    parsed_args = parser.parse_args(args, namespace=CommandNamespace())
-    command_cls = RootCommandGroup.get_command(parsed_args.command)
-    command_cls().run(parsed_args)
-
-
 def _main(argv):
     args = argv[1:]
     if '-U' in args or '--update' in args:
@@ -112,7 +91,8 @@ def _main(argv):
     backend = None
     if not compat_mode:
         if _CMD in args:
-            _run_command(args)
+            from .command import run_command
+            run_command(prog=_PROG, cmd_arg=_CMD, args=args)
             return
         parser = _get_main_parser()
         parsed_args, ytdl_args = parser.parse_known_args(args)

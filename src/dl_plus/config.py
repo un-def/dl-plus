@@ -63,6 +63,20 @@ class _Config(ConfigParser):
         )
 
 
+class Option:
+
+    __slots__ = ('section', 'option')
+
+    def __init__(self, section: str, option: str) -> None:
+        self.section = section
+        self.option = option
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        return instance.get(self.section, self.option)
+
+
 class Config(_Config):
 
     _UPDATE_SECTIONS = ('main',)
@@ -109,3 +123,5 @@ class Config(_Config):
             return None
         return list(itertools.chain.from_iterable(
             map(shlex.split, self.options('backend-options'))))
+
+    backend = Option('main', 'backend')

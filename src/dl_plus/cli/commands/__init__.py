@@ -1,6 +1,5 @@
-from dl_plus.cli.command import CommandGroup
-
 from .backend import BackendCommandGroup
+from .base import CommandGroup
 
 
 class RootCommandGroup(CommandGroup):

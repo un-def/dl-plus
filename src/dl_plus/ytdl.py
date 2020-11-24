@@ -1,5 +1,6 @@
 import importlib
 import sys
+from collections import namedtuple
 from io import StringIO
 
 from .exceptions import DLPlusException
@@ -21,6 +22,8 @@ class UnknownBuiltinExtractor(YoutubeDLError):
 
 _NAME_PART_SURROGATE = '_'
 
+
+YoutubeDLInfo = namedtuple('YoutubeDLInfo', 'module,version,path')
 
 _ytdl_module = None
 _ytdl_module_name = None
@@ -56,6 +59,16 @@ def run(args):
         _ytdl_module.main()
     finally:
         sys.argv = orig_sys_argv
+
+
+def get_info() -> YoutubeDLInfo:
+    _check_initialized()
+    global _ytdl_module
+    return YoutubeDLInfo(
+        module=_ytdl_module.__name__,
+        version=import_from('version', '__version__'),
+        path=_ytdl_module.__file__,
+    )
 
 
 def get_help():
