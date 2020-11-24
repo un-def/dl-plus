@@ -3,10 +3,10 @@ import os.path
 import sys
 from textwrap import dedent
 
-from . import core, ytdl
-from .config import Config
-from .const import DL_PLUS_VERSION
-from .exceptions import DLPlusException
+from dl_plus import core, ytdl
+from dl_plus.config import Config
+from dl_plus.const import DL_PLUS_VERSION
+from dl_plus.exceptions import DLPlusException
 
 
 __all__ = ['main']
