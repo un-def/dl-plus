@@ -2,6 +2,7 @@ import argparse
 import os.path
 import sys
 from textwrap import dedent
+from typing import List
 
 from dl_plus import core, ytdl
 from dl_plus.config import Config
@@ -10,6 +11,9 @@ from dl_plus.exceptions import DLPlusException
 
 
 __all__ = ['main']
+
+_PROG = 'dl-plus'
+_CMD = '--cmd'
 
 
 def _dedent(text):
@@ -20,27 +24,15 @@ def _is_running_as_youtube_dl(program_name: str) -> bool:
     return os.path.basename(program_name) in ['youtube-dl', 'youtube-dl.exe']
 
 
-class _ArgParser(argparse.ArgumentParser):
+class _MainArgParser(argparse.ArgumentParser):
 
     def format_help(self):
         return super().format_help() + ytdl.get_help()
 
 
-def _get_common_parser() -> argparse.ArgumentParser:
-    """The common parser is used in both compat and dl-plus modes"""
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument(
-        '-U', '--update',
-        action='store_true',
-        help=argparse.SUPPRESS,
-    )
-    return parser
-
-
-def _get_parser() -> argparse.ArgumentParser:
-    """This parser is used in dl-plus mode only"""
-    parser = _ArgParser(
-        prog='dl-plus',
+def _get_main_parser() -> argparse.ArgumentParser:
+    parser = _MainArgParser(
+        prog=_PROG,
         usage=(
             '%(prog)s '
             '[--dlp-config PATH | --no-dlp-config] '
@@ -99,16 +91,30 @@ def _get_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _run_command(args: List[str]) -> None:
+    from .command import CommandArgParser, CommandNamespace
+    from .commands import RootCommandGroup
+    parser = CommandArgParser(prog=f'{_PROG} {_CMD}')
+    parser.add_argument(
+        _CMD, action='store_true', required=True, help=argparse.SUPPRESS)
+    parser.add_command_group(RootCommandGroup)
+    parsed_args = parser.parse_args(args, namespace=CommandNamespace())
+    command_cls = RootCommandGroup.get_command(parsed_args.command)
+    command_cls().run(parsed_args)
+
+
 def _main(argv):
-    common_parser = _get_common_parser()
-    parsed_common_args, args = common_parser.parse_known_args(argv[1:])
-    if parsed_common_args.update:
+    args = argv[1:]
+    if '-U' in args or '--update' in args:
         raise DLPlusException('update is not yet supported')
     compat_mode = _is_running_as_youtube_dl(argv[0])
     config = Config()
     backend = None
     if not compat_mode:
-        parser = _get_parser()
+        if _CMD in args:
+            _run_command(args)
+            return
+        parser = _get_main_parser()
         parsed_args, ytdl_args = parser.parse_known_args(args)
         backend = parsed_args.backend
         if not parsed_args.no_dlp_config:
