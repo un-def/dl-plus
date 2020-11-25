@@ -8,11 +8,6 @@ if TYPE_CHECKING:
     from .extractor.extractor import Extractor
 
 
-def init_backend(backend: str) -> ytdl.YoutubeDLInfo:
-    ytdl.init(backend.replace('-', '_'))
-    return ytdl.get_info()
-
-
 def get_extractors(names: Iterable[str]) -> List[Type['Extractor']]:
     extractors_dict: Dict[Type['Extractor'], bool] = {}
     for name in names:

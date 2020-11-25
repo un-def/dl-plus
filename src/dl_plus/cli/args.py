@@ -31,3 +31,9 @@ dlp_config = ExclusiveArgGroup(
         help='do not read dl-plus config.',
     ),
 )
+
+backend = Arg(
+    '--backend',
+    metavar='BACKEND',
+    help='youtube-dl backend.',
+)

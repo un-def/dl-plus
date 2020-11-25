@@ -4,6 +4,7 @@ import sys
 from textwrap import dedent
 
 from dl_plus import core, ytdl
+from dl_plus.backend import init_backend
 from dl_plus.config import Config
 from dl_plus.const import DL_PLUS_VERSION
 from dl_plus.exceptions import DLPlusException
@@ -50,16 +51,12 @@ def _get_main_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     args.dlp_config.add_to_parser(parser)
+    args.backend.add_to_parser(parser)
     parser.add_argument(
         '--dlp-version',
         action='version',
         version=DL_PLUS_VERSION,
-        help='print dl-plus version and exit',
-    )
-    parser.add_argument(
-        '--backend',
-        metavar='BACKEND',
-        help='youtube-dl backend.',
+        help='print dl-plus version and exit.',
     )
     extractor_group = parser.add_mutually_exclusive_group()
     extractor_group.add_argument(
@@ -104,7 +101,7 @@ def _main(argv):
         config.load()
     if not backend:
         backend = config['main']['backend']
-    core.init_backend(backend)
+    init_backend(backend)
     force_generic_extractor = False
     extractors = None
     if not compat_mode:

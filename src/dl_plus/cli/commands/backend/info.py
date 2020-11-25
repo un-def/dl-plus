@@ -1,6 +1,6 @@
+from dl_plus.backend import init_backend
 from dl_plus.cli import args
 from dl_plus.cli.commands.base import Command
-from dl_plus.core import init_backend
 
 
 class BackendInfoCommand(Command):
@@ -9,8 +9,10 @@ class BackendInfoCommand(Command):
 
     arguments = (
         args.dlp_config,
+        args.backend,
     )
 
     def run(self):
-        backend_info = init_backend(self.config.backend)
+        backend = self.args.backend or self.config.backend
+        backend_info = init_backend(backend)
         print(backend_info)
