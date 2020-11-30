@@ -10,7 +10,7 @@ from typing import Optional
 from dl_plus import ytdl
 from dl_plus.config import get_config_dir_path
 from dl_plus.exceptions import DLPlusException
-from dl_plus.pypi import PyPIClient, Wheel
+from dl_plus.pypi import Metadata, PyPIClient, Wheel
 
 
 backends_dir = get_config_dir_path() / 'backends'
@@ -18,7 +18,7 @@ backends_dir = get_config_dir_path() / 'backends'
 client = PyPIClient()
 
 BackendInfo = namedtuple(
-    'BackendInfo', 'package_name,version,location,managed')
+    'BackendInfo', 'import_name,version,path,is_managed,metadata')
 
 
 class BackendError(DLPlusException):
@@ -41,29 +41,49 @@ def _normalize(string: str) -> str:
 def parse_backend_string(backend_string: str):
     if '/' in backend_string:
         rel_location, _, package_name = backend_string.partition('/')
-        location = backends_dir / rel_location
-        if not location.is_dir():
-            raise BackendError(f'{location} does not exist or is a directory')
+        backend_dir = backends_dir / rel_location
+        if not backend_dir.is_dir():
+            raise BackendError(
+                f'{backend_dir} does not exist or is not a directory')
     else:
         package_name = backend_string
-        location = backends_dir / _normalize(backend_string)
-        if not location.is_dir():
-            location = None
-    return location, _normalize(package_name)
+        backend_dir = backends_dir / _normalize(backend_string)
+        if not backend_dir.is_dir():
+            backend_dir = None
+    return backend_dir, _normalize(package_name)
+
+
+def save_metadata(backend_dir: Path, metadata: Metadata) -> None:
+    with open(backend_dir / 'metadata.json', 'w') as fobj:
+        json.dump(metadata, fobj)
+
+
+def load_metadata(backend_dir: Path) -> Metadata:
+    try:
+        with open(backend_dir / 'metadata.json') as fobj:
+            return Metadata(json.load(fobj))
+    except OSError:
+        return None
 
 
 def init_backend(backend_string: str) -> BackendInfo:
-    location, package_name = parse_backend_string(backend_string)
-    if location:
-        sys.path.insert(0, str(location))
+    backend_dir, package_name = parse_backend_string(backend_string)
+    if backend_dir:
+        sys.path.insert(0, str(backend_dir))
     ytdl.init(package_name)
     ytdl_module = ytdl.get_ytdl_module()
-    location = Path(ytdl_module.__path__[0])
+    path = Path(ytdl_module.__path__[0])
+    is_managed = _is_managed(path)
+    if is_managed:
+        metadata = load_metadata(backend_dir)
+    else:
+        metadata = None
     return BackendInfo(
-        package_name=ytdl_module.__name__,
+        import_name=ytdl_module.__name__,
         version=ytdl.import_from('version', '__version__'),
-        location=location,
-        managed=_is_managed(location),
+        path=path,
+        is_managed=is_managed,
+        metadata=metadata,
     )
 
 
@@ -76,8 +96,7 @@ def download_backend(
         if backend_dir.exists():
             shutil.rmtree(backend_dir)
         os.makedirs(backend_dir)
-        with open(backend_dir / 'metadata.json', 'w') as fobj:
-            json.dump(wheel.metadata, fobj)
-            with zipfile.ZipFile(wheel.file) as zfobj:
-                zfobj.extractall(backend_dir)
+        save_metadata(backend_dir, wheel.metadata)
+        with zipfile.ZipFile(wheel.file) as zfobj:
+            zfobj.extractall(backend_dir)
     return wheel

@@ -32,6 +32,21 @@ class DownloadError(RequestError):
     pass
 
 
+class Metadata(dict):
+
+    @property
+    def name(self) -> str:
+        return self['info']['name']
+
+    @property
+    def version(self) -> str:
+        return self['info']['version']
+
+    @property
+    def releases(self) -> Dict[str, Dict]:
+        return self['releases']
+
+
 class PyPIClient:
 
     DEFAULT_JSON_URL = 'https://pypi.org/pypi/{project_name}/json'
@@ -41,13 +56,13 @@ class PyPIClient:
             json_url = self.DEFAULT_JSON_URL
         self._json_url = json_url
 
-    def fetch_json_metadata(self, project_name: str) -> Dict:
+    def fetch_metadata(self, project_name: str) -> Metadata:
         if self._json_url is None:
             raise PyPIClientError('json_url is not set')
         url = self._json_url.format(project_name=project_name)
         try:
             with urlopen(url) as response:
-                return json.load(response)
+                return Metadata(json.load(response))
         except (OSError, ValueError) as exc:
             raise RequestError from exc
 
@@ -59,16 +74,16 @@ class PyPIClient:
         self, project_name: str, version: Optional[str] = None,
     ) -> Wheel:
         try:
-            metadata = self.fetch_json_metadata(project_name)
+            metadata = self.fetch_metadata(project_name)
         except RequestError as exc:
             if isinstance(exc.error, HTTPError) and exc.error.code == 404:
                 raise DownloadError(f'{project_name}: not found') from exc
             raise DownloadError(
                 f'{project_name}: unexpected error: {exc}') from exc
         if version is None:
-            version = metadata['info']['version']
+            version = metadata.version
         try:
-            releases = metadata['releases'][version]
+            releases = metadata.releases[version]
         except KeyError:
             raise DownloadError(f'{project_name}-{version}: not found')
         try:
