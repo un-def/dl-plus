@@ -26,6 +26,12 @@ A [youtube-dl][youtube-dl-website] extension with pluggable extractors
 
 2.  Install `youtube-dl` or any compatible package (fork):
 
+    * using `dl-plus` itself:
+
+      ```
+      dl-plus --cmd backend install
+      ```
+
     * using [pipx][pipx-website]:
 
       ```

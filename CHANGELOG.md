@@ -4,6 +4,9 @@
 
 ### Features
 
+  * Backend management commands. It is now possible to install backends using `dl-plus` itself. Backends are installed into the `dl-plus` config directory, therefore, they are not visible to/do not interfere with other packages installed into the same Python environment.
+    - `dl-plus --cmd backend install [NAME [VERSION]]` installs the backend package into the `dl-plus` config directory.
+    - `dl-plus --cmd backend info` prints information about the configured backend.
   * A new optional `[backend-options]` config section. The section has exactly the same format as the `youtube-dl` config (one can think of it as the `youtube-dl` config embedded into the `dl-plus` one). If this section is present, even if it is empty, it overrides `youtube-dl` own config(s) (`--ignore-config` is used internally).
   * `youtube-dl`–compatible mode. When `dl-plus` is run as `youtube-dl` (e.g., via a symlink), it disables all additional command line options. The config file is still processed.
 
