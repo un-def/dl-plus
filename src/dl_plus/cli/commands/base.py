@@ -13,7 +13,7 @@ class _CommandBase(object):
             setattr(cls, 'name', dct['__module__'].rpartition('.')[-1])
         long_description = dct.get('long_description')
         if long_description:
-            long_description = dedent(long_description).rstrip() + '\n',
+            long_description = dedent(long_description).rstrip() + '\n'
             setattr(cls, 'long_description', long_description)
 
 

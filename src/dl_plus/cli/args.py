@@ -1,4 +1,4 @@
-class Arg(object):
+class Arg:
 
     __slots__ = ('args', 'kwargs')
 
@@ -10,7 +10,7 @@ class Arg(object):
         return parser.add_argument(*self.args, **self.kwargs)
 
 
-class ExclusiveArgGroup(object):
+class ExclusiveArgGroup:
 
     __slots__ = ('arguments', 'required')
 
@@ -28,7 +28,7 @@ dlp_config = ExclusiveArgGroup(
     Arg('--dlp-config', metavar='PATH', help='dl-plus config path.'),
     Arg(
         '--no-dlp-config', action='store_true',
-        help='do not read dl-plus config.',
+        help='Do not read dl-plus config.',
     ),
 )
 

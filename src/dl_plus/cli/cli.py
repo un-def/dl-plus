@@ -56,7 +56,7 @@ def _get_main_parser() -> argparse.ArgumentParser:
         '--dlp-version',
         action='version',
         version=DL_PLUS_VERSION,
-        help='print dl-plus version and exit.',
+        help='Print dl-plus version and exit.',
     )
     extractor_group = parser.add_mutually_exclusive_group()
     extractor_group.add_argument(

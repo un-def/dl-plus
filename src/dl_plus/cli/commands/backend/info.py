@@ -5,7 +5,7 @@ from dl_plus.cli.commands.base import Command
 
 class BackendInfoCommand(Command):
 
-    short_description = 'backend information'
+    short_description = 'Show backend information'
 
     arguments = (
         args.dlp_config,

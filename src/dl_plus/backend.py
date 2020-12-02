@@ -1,21 +1,16 @@
 import json
-import os
-import shutil
 import sys
-import zipfile
 from collections import namedtuple
 from pathlib import Path
-from typing import Optional
 
 from dl_plus import ytdl
 from dl_plus.config import get_config_dir_path
 from dl_plus.exceptions import DLPlusException
-from dl_plus.pypi import Metadata, PyPIClient, Wheel
+from dl_plus.pypi import Metadata
 
 
 backends_dir = get_config_dir_path() / 'backends'
 
-client = PyPIClient()
 
 BackendInfo = namedtuple(
     'BackendInfo', 'import_name,version,path,is_managed,metadata')
@@ -38,16 +33,20 @@ def _normalize(string: str) -> str:
     return string.replace('-', '_')
 
 
+def get_backend_dir(backend: str) -> Path:
+    return backends_dir / _normalize(backend)
+
+
 def parse_backend_string(backend_string: str):
     if '/' in backend_string:
-        rel_location, _, package_name = backend_string.partition('/')
-        backend_dir = backends_dir / rel_location
+        backend, _, package_name = backend_string.partition('/')
+        backend_dir = get_backend_dir(backend)
         if not backend_dir.is_dir():
             raise BackendError(
                 f'{backend_dir} does not exist or is not a directory')
     else:
         package_name = backend_string
-        backend_dir = backends_dir / _normalize(backend_string)
+        backend_dir = get_backend_dir(backend_string)
         if not backend_dir.is_dir():
             backend_dir = None
     return backend_dir, _normalize(package_name)
@@ -85,18 +84,3 @@ def init_backend(backend_string: str) -> BackendInfo:
         is_managed=is_managed,
         metadata=metadata,
     )
-
-
-def download_backend(
-    project_name: str, version: Optional[str] = None,
-) -> Wheel:
-    wheel = client.download_wheel(project_name, version)
-    with wheel.file:
-        backend_dir = backends_dir / _normalize(wheel.name)
-        if backend_dir.exists():
-            shutil.rmtree(backend_dir)
-        os.makedirs(backend_dir)
-        save_metadata(backend_dir, wheel.metadata)
-        with zipfile.ZipFile(wheel.file) as zfobj:
-            zfobj.extractall(backend_dir)
-    return wheel

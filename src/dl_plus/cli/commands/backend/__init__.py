@@ -6,7 +6,7 @@ from .install import BackendInstallCommand
 
 class BackendCommandGroup(CommandGroup):
 
-    short_description = 'backend commands'
+    short_description = 'Backend management commands'
 
     commands = (
         BackendInfoCommand,

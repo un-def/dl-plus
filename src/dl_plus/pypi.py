@@ -9,7 +9,7 @@ from urllib.request import urlopen
 from dl_plus.exceptions import DLPlusException
 
 
-Wheel = namedtuple('Wheel', 'name,version,metadata,filename,file')
+Wheel = namedtuple('Wheel', 'name,version,metadata,filename,url,sha256')
 
 
 class PyPIClientError(DLPlusException):
@@ -29,7 +29,14 @@ class ParseError(PyPIClientError):
 
 class DownloadError(RequestError):
 
-    pass
+    def __init__(
+        self, project_name: str, version: Optional[str], error: str,
+    ) -> None:
+        if version:
+            message = f'{project_name} {version}: {error}'
+        else:
+            message = f'{project_name}: {error}'
+        super().__init__(message)
 
 
 class Metadata(dict):
@@ -43,23 +50,27 @@ class Metadata(dict):
         return self['info']['version']
 
     @property
-    def releases(self) -> Dict[str, Dict]:
-        return self['releases']
+    def urls(self) -> Dict[str, Dict]:
+        return self['urls']
 
 
 class PyPIClient:
 
-    DEFAULT_JSON_URL = 'https://pypi.org/pypi/{project_name}/json'
+    JSON_BASE_URL = 'https://pypi.org/pypi'
 
-    def __init__(self, *, json_url: Optional[str] = None) -> None:
-        if json_url is None:
-            json_url = self.DEFAULT_JSON_URL
-        self._json_url = json_url
+    def build_json_url(
+        self, project_name: str, version: Optional[str] = None,
+    ) -> str:
+        parts = [self.JSON_BASE_URL, project_name]
+        if version:
+            parts.append(version)
+        parts.append('json')
+        return '/'.join(parts)
 
-    def fetch_metadata(self, project_name: str) -> Metadata:
-        if self._json_url is None:
-            raise PyPIClientError('json_url is not set')
-        url = self._json_url.format(project_name=project_name)
+    def fetch_metadata(
+        self, project_name: str, version: Optional[str] = None,
+    ) -> Metadata:
+        url = self.build_json_url(project_name, version)
         try:
             with urlopen(url) as response:
                 return Metadata(json.load(response))
@@ -70,35 +81,28 @@ class PyPIClient:
         return (
             release['packagetype'] == 'bdist_wheel' and not release['yanked'])
 
-    def download_wheel(
+    def fetch_wheel_info(
         self, project_name: str, version: Optional[str] = None,
     ) -> Wheel:
         try:
-            metadata = self.fetch_metadata(project_name)
+            metadata = self.fetch_metadata(project_name, version)
         except RequestError as exc:
             if isinstance(exc.error, HTTPError) and exc.error.code == 404:
-                raise DownloadError(f'{project_name}: not found') from exc
-            raise DownloadError(
-                f'{project_name}: unexpected error: {exc}') from exc
-        if version is None:
-            version = metadata.version
+                error = 'not found'
+            else:
+                error = 'unexpected error'
+            raise DownloadError(project_name, version, error) from exc
         try:
-            releases = metadata.releases[version]
-        except KeyError:
-            raise DownloadError(f'{project_name}-{version}: not found')
-        try:
-            release = next(filter(self._is_wheel_release, releases))
+            release = next(filter(self._is_wheel_release, metadata.urls))
         except StopIteration:
-            raise DownloadError(
-                f'{project_name}-{version}: no wheel distribution')
-        fileobj = self.download_file(
-            url=release['url'], sha256=release['digests']['sha256'])
+            raise DownloadError(project_name, version, 'no wheel distribution')
         return Wheel(
-            name=metadata['info']['name'],
-            version=version,
+            name=metadata.name,
+            version=metadata.version,
             metadata=metadata,
             filename=release['filename'],
-            file=fileobj,
+            url=release['url'],
+            sha256=release['digests']['sha256'],
         )
 
     def download_file(self, url: str, sha256: Optional[str] = None) -> BytesIO:
