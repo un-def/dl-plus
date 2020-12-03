@@ -1,4 +1,4 @@
-from .cli import main
+from dl_plus.cli import main
 
 
 main()
