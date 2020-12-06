@@ -2,6 +2,7 @@ import os
 import zipapp
 from pathlib import Path
 
+
 repo_dir = Path(__file__).parent.parent
 os.chdir(repo_dir)
 
