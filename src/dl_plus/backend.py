@@ -4,12 +4,12 @@ from collections import namedtuple
 from pathlib import Path
 
 from dl_plus import ytdl
-from dl_plus.config import get_config_dir_path
+from dl_plus.config import get_config_home
 from dl_plus.exceptions import DLPlusException
 from dl_plus.pypi import Metadata
 
 
-backends_dir = get_config_dir_path() / 'backends'
+backends_dir = get_config_home() / 'backends'
 
 
 BackendInfo = namedtuple(

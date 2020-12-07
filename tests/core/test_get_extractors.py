@@ -27,22 +27,20 @@ def mock_machinery_load_extractors_by_peqn(name):
 
 @pytest.fixture
 def mock_loaders(monkeypatch):
-    with monkeypatch.context() as mp:
-        mp.setattr(
-            'dl_plus.ytdl.get_all_extractors', mock_ytdl_get_all_extractors)
-        mp.setattr(
-            'dl_plus.ytdl.get_extractors_by_name',
-            mock_ytdl_get_extractors_by_name,
-        )
-        mp.setattr(
-            'dl_plus.extractor.machinery.load_all_extractors',
-            mock_machinery_load_all_extractors,
-        )
-        mp.setattr(
-            'dl_plus.extractor.machinery.load_extractors_by_peqn',
-            mock_machinery_load_extractors_by_peqn,
-        )
-        yield
+    monkeypatch.setattr(
+        'dl_plus.ytdl.get_all_extractors', mock_ytdl_get_all_extractors)
+    monkeypatch.setattr(
+        'dl_plus.ytdl.get_extractors_by_name',
+        mock_ytdl_get_extractors_by_name,
+    )
+    monkeypatch.setattr(
+        'dl_plus.extractor.machinery.load_all_extractors',
+        mock_machinery_load_all_extractors,
+    )
+    monkeypatch.setattr(
+        'dl_plus.extractor.machinery.load_extractors_by_peqn',
+        mock_machinery_load_extractors_by_peqn,
+    )
 
 
 @pytest.mark.parametrize('names,expected', [

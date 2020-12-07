@@ -20,12 +20,8 @@ def monkeypatch_get_all_extractors(request, monkeypatch, reset_cache):
         if marker:
             extractors = marker.args
     if extractors is not None:
-        with monkeypatch.context() as mp:
-            mp.setattr(
-                'dl_plus.ytdl.get_all_extractors', lambda **kw: extractors)
-            yield
-    else:
-        yield
+        monkeypatch.setattr(
+            'dl_plus.ytdl.get_all_extractors', lambda **kw: extractors)
 
 
 @pytest.mark.parametrize('extractors,expected', [

@@ -1,2 +1,2 @@
-DL_PLUS_VERSION = '0.4.0.post1'
+DL_PLUS_VERSION = '0.5.0.dev0'
 PLUGINS_PACKAGE = 'dl_plus.extractors'

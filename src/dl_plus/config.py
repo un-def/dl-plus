@@ -24,13 +24,17 @@ class ConfigError(DLPlusException):
     pass
 
 
-_config_dir_path: Optional[Path] = None
+_config_home: Optional[Path] = None
 
 
-def get_config_dir_path() -> Path:
-    global _config_dir_path
-    if _config_dir_path:
-        return _config_dir_path
+def get_config_home() -> Path:
+    global _config_home
+    if _config_home:
+        return _config_home
+    path_from_env = os.getenv('DL_PLUS_HOME')
+    if path_from_env:
+        _config_home = Path(path_from_env)
+        return _config_home
     if os.name == 'nt':
         app_data = os.getenv('AppData')
         if app_data:
@@ -43,9 +47,8 @@ def get_config_dir_path() -> Path:
             parent = Path(xdg_config_home)
         else:
             parent = Path.home() / '.config'
-    path = parent / 'dl-plus'
-    _config_dir_path = path
-    return path
+    _config_home = parent / 'dl-plus'
+    return _config_home
 
 
 class _Config(ConfigParser):
@@ -88,7 +91,7 @@ class Config(_Config):
 
     def load(self, path: Union[Path, str, None] = None) -> None:
         if not path:
-            path = get_config_dir_path() / 'config.ini'
+            path = get_config_home() / 'config.ini'
             if not path.is_file():
                 return
         else:
