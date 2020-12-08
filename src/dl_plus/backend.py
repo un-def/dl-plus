@@ -1,4 +1,3 @@
-import json
 import sys
 from collections import namedtuple
 from pathlib import Path
@@ -6,7 +5,7 @@ from pathlib import Path
 from dl_plus import ytdl
 from dl_plus.config import get_config_home
 from dl_plus.exceptions import DLPlusException
-from dl_plus.pypi import Metadata
+from dl_plus.pypi import load_metadata
 
 
 backends_dir = get_config_home() / 'backends'
@@ -50,19 +49,6 @@ def parse_backend_string(backend_string: str):
         if not backend_dir.is_dir():
             backend_dir = None
     return backend_dir, _normalize(package_name)
-
-
-def save_metadata(backend_dir: Path, metadata: Metadata) -> None:
-    with open(backend_dir / 'metadata.json', 'w') as fobj:
-        json.dump(metadata, fobj)
-
-
-def load_metadata(backend_dir: Path) -> Metadata:
-    try:
-        with open(backend_dir / 'metadata.json') as fobj:
-            return Metadata(json.load(fobj))
-    except OSError:
-        return None
 
 
 def init_backend(backend_string: str) -> BackendInfo:

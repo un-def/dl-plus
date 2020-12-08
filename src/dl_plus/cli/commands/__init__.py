@@ -1,5 +1,6 @@
 from .backend import BackendCommandGroup
 from .base import CommandGroup
+from .extractor import ExtractorCommandGroup
 
 
 class RootCommandGroup(CommandGroup):
@@ -8,4 +9,5 @@ class RootCommandGroup(CommandGroup):
 
     commands = (
         BackendCommandGroup,
+        ExtractorCommandGroup,
     )

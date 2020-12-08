@@ -2,6 +2,7 @@ import hashlib
 import json
 from collections import namedtuple
 from io import BytesIO
+from pathlib import Path
 from typing import Dict, Optional
 from urllib.error import HTTPError
 from urllib.request import urlopen
@@ -52,6 +53,19 @@ class Metadata(dict):
     @property
     def urls(self) -> Dict[str, Dict]:
         return self['urls']
+
+
+def save_metadata(backend_dir: Path, metadata: Metadata) -> None:
+    with open(backend_dir / 'metadata.json', 'w') as fobj:
+        json.dump(metadata, fobj)
+
+
+def load_metadata(backend_dir: Path) -> Metadata:
+    try:
+        with open(backend_dir / 'metadata.json') as fobj:
+            return Metadata(json.load(fobj))
+    except OSError:
+        return None
 
 
 class PyPIClient:

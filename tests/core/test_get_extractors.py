@@ -20,9 +20,10 @@ def mock_machinery_load_all_extractors():
 
 
 def mock_machinery_load_extractors_by_peqn(name):
-    if name == 'ns1/plugin':
+    name_str = str(name)
+    if name_str == 'ns1/plugin':
         return [EM('ns1/plugin:foo'), EM('ns1/plugin:bar')]
-    return [EM(name)]
+    return [EM(name_str)]
 
 
 @pytest.fixture
