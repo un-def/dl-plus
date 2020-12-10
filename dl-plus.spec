@@ -3,11 +3,13 @@ from stdlib_list import stdlib_list
 
 hiddenimports = [
     m for m in stdlib_list()
-    if not m.startswith('idlelib')
+    if not m.startswith('ensurepip')
+    and not m.startswith('idlelib')
     and not m.startswith('lib2to3')
     and not m.startswith('test')
     and not m.startswith('tkinter')
     and not m.startswith('turtle')
+    and not m.startswith('venv')
 ]
 
 
