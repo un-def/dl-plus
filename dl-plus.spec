@@ -25,7 +25,7 @@ a = Analysis(   # noqa: F821
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=None,
-    noarchive=False,
+    noarchive=True,
 )
 pyz = PYZ(   # noqa: F821
     a.pure,
