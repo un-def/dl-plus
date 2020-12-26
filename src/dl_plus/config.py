@@ -33,7 +33,7 @@ def get_config_home() -> Path:
         return _config_home
     path_from_env = os.getenv('DL_PLUS_HOME')
     if path_from_env:
-        _config_home = Path(path_from_env)
+        _config_home = Path(path_from_env).resolve()
         return _config_home
     if os.name == 'nt':
         app_data = os.getenv('AppData')
@@ -47,8 +47,25 @@ def get_config_home() -> Path:
             parent = Path(xdg_config_home)
         else:
             parent = Path.home() / '.config'
-    _config_home = parent / 'dl-plus'
+    _config_home = (parent / 'dl-plus').resolve()
     return _config_home
+
+
+def get_config_path(path: Union[Path, str, None] = None) -> Optional[Path]:
+    is_default_path = False
+    if not path:
+        path = os.getenv('DL_PLUS_CONFIG')
+        if not path:
+            path = get_config_home() / 'config.ini'
+            is_default_path = True
+    if isinstance(path, str):
+        path = Path(path)
+    path = path.resolve()
+    if path.is_file():
+        return path
+    if is_default_path:
+        return None
+    raise ConfigError(f'failed to get config path: {path} is not a file')
 
 
 class _Config(ConfigParser):
@@ -90,21 +107,14 @@ class Config(_Config):
         self.read_string(DEFAULT_CONFIG)
 
     def load(self, path: Union[Path, str, None] = None) -> None:
-        if not path:
-            path = get_config_home() / 'config.ini'
-            if not path.is_file():
-                return
-        else:
-            if isinstance(path, str):
-                path = Path(path)
-            if not path.is_file():
-                raise ConfigError(
-                    f'failed to load config: {path} is not a file')
+        _path = get_config_path(path)
+        if not _path:
+            return
         config = _Config()
         try:
-            with open(path) as fobj:
+            with open(_path) as fobj:
                 config.read_file(fobj)
-        except OSError as exc:
+        except (OSError, ValueError) as exc:
             raise ConfigError(f'failed to load config: {exc}') from exc
         for section in self._UPDATE_SECTIONS:
             self._load_section(section, config, replace=False)
