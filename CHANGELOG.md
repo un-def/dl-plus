@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0 (unreleased)
+
+### Features
+
+  * Extractor plugins management. It is now possible to install extractor plugins using `dl-plus` itself. Plugins are installed into the `dl-plus` config directory. The format of the command is as follows: `dl-plus --cmd extractor install NAME [VERSION]`.
+  * Configuration via environment variables:
+    - `DL_PLUS_HOME` — the directory where the default config (`config.ini`), backends and extractors are stored. The default value is `$XDG_CONFIG_HOME/dl-plus`/`%APPDATA%\dl-plus`.
+    - `DL_PLUS_CONFIG` — the path of the config file. The default value is `$DL_PLUS_HOME/config.ini`.
+
 ## 0.4.0
 
 ### Features
