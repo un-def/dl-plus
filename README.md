@@ -48,6 +48,18 @@ A [youtube-dl][youtube-dl-website] extension with pluggable extractors
 
 3.  (optional) Install some plugins:
 
+    * using `dl-plus` itself:
+
+      ```
+      dl-plus --cmd extractor install un1def/wasdtv
+      ```
+
+      PyPI package names are supported too:
+
+      ```
+      dl-plus --cmd extractor install dl-plus-extractor-un1def-wasdtv
+      ```
+
     * using [pipx][pipx-website]:
 
       ```
