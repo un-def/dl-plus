@@ -24,6 +24,13 @@ A [youtube-dl][youtube-dl-website] extension with pluggable extractors
       pip install dl-plus
       ```
 
+    (**\*nix**) Alternatively, you can download a single file binary (zipapp) and put it somewhere in your `PATH`:
+
+    ```
+    curl -L https://github.com/un-def/dl-plus/releases/latest/download/dl-plus -o dl-plus
+    chmod a+x dl-plus
+    ```
+
 2.  Install `youtube-dl` or any compatible package (fork):
 
     * using `dl-plus` itself:
