@@ -12,6 +12,11 @@ def config_home():
     return None
 
 
+@pytest.fixture(autouse=True)
+def unset_config_home_envvar(monkeypatch):
+    monkeypatch.delenv('DL_PLUS_HOME', raising=False)
+
+
 def test_location_from_env(monkeypatch):
     monkeypatch.setenv('DL_PLUS_HOME', '/dl/plus/home')
     assert get_config_home() == Path('/dl/plus/home')

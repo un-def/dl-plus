@@ -3,7 +3,8 @@ import pytest
 from dl_plus.config import ConfigError, get_config_path
 
 
-def test_default_path(config_home):
+def test_default_path(config_home, monkeypatch):
+    monkeypatch.delenv('DL_PLUS_CONFIG', raising=False)
     config_home.mkdir(parents=True, exist_ok=True)
     config_path = config_home / 'config.ini'
     assert get_config_path() is None
