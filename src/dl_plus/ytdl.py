@@ -109,6 +109,8 @@ def get_all_extractors(*, include_generic: bool):
 
 
 def _get_extractor_name(extractor):
+    if hasattr(extractor, '_get_real_class'):
+        extractor = extractor._get_real_class()
     ie_name = extractor.IE_NAME
     if isinstance(ie_name, property):
         return extractor().IE_NAME
