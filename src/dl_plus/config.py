@@ -10,7 +10,7 @@ from .exceptions import DLPlusException
 
 DEFAULT_CONFIG = """
 [main]
-backend = youtube_dl
+backend = :autodetect:
 
 [extractors.enable]
 :builtins:

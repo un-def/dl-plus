@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import sys
 from collections import namedtuple
 from pathlib import Path
+from typing import Iterable
 
 from dl_plus import ytdl
 from dl_plus.config import get_config_home
@@ -15,9 +18,22 @@ BackendInfo = namedtuple(
     'BackendInfo', 'import_name,version,path,is_managed,metadata')
 
 
+_AUTODETECT_CANDIDATES = ('youtube_dl', 'yt_dlp', 'youtube_dlc')
+
+
 class BackendError(DLPlusException):
 
     pass
+
+
+class AutodetectFailed(BackendError):
+
+    def __init__(self, candidates: Iterable[str]) -> None:
+        self._candidates = tuple(candidates)
+
+    def __str__(self) -> str:
+        return 'failed to autodetect backend (candidates tested: {})'.format(
+            ', '.join(self._candidates))
 
 
 def _is_managed(location: Path) -> bool:
@@ -36,7 +52,7 @@ def get_backend_dir(backend: str) -> Path:
     return backends_dir / _normalize(backend)
 
 
-def parse_backend_string(backend_string: str):
+def parse_backend_string(backend_string: str) -> tuple[Path | None, str]:
     if '/' in backend_string:
         backend, _, package_name = backend_string.partition('/')
         backend_dir = get_backend_dir(backend)
@@ -51,11 +67,28 @@ def parse_backend_string(backend_string: str):
     return backend_dir, _normalize(package_name)
 
 
-def init_backend(backend_string: str) -> BackendInfo:
+def _init_backend(backend_string: str) -> Path | None:
     backend_dir, package_name = parse_backend_string(backend_string)
     if backend_dir:
         sys.path.insert(0, str(backend_dir))
     ytdl.init(package_name)
+    return backend_dir
+
+
+def _autodetect_backend() -> Path | None:
+    for candidate in _AUTODETECT_CANDIDATES:
+        try:
+            return _init_backend(candidate)
+        except DLPlusException:
+            pass
+    raise AutodetectFailed(_AUTODETECT_CANDIDATES)
+
+
+def init_backend(backend_string: str) -> BackendInfo:
+    if backend_string == ':autodetect:':
+        backend_dir = _autodetect_backend()
+    else:
+        backend_dir = _init_backend(backend_string)
     ytdl_module = ytdl.get_ytdl_module()
     path = Path(ytdl_module.__path__[0])
     is_managed = _is_managed(path)
