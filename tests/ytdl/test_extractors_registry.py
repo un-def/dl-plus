@@ -6,8 +6,8 @@ from tests.testlib import ExtractorMock as EM
 
 @pytest.fixture(autouse=True)
 def reset_cache():
-    ytdl._extractors = None
-    ytdl._extractors_registry = None
+    ytdl._extractors = ytdl._NOT_SET
+    ytdl._extractors_registry = ytdl._NOT_SET
 
 
 @pytest.fixture(autouse=True)

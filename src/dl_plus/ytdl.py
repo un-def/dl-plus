@@ -22,22 +22,27 @@ class UnknownBuiltinExtractor(YoutubeDLError):
 _NAME_PART_SURROGATE = '_'
 
 
-_ytdl_module = None
-_ytdl_module_name = None
+_NOT_SET = object()
 
-_extractors = None
-_extractors_registry = None
+
+_ytdl_module = _NOT_SET
+_ytdl_module_name = _NOT_SET
+
+_extractors = _NOT_SET
+_extractors_registry = _NOT_SET
+
+_lazy_load_extractor_base = _NOT_SET
 
 
 def _check_initialized():
     global _ytdl_module
-    if not _ytdl_module:
+    if _ytdl_module is _NOT_SET:
         raise YoutubeDLError('not initialized')
 
 
 def init(ytdl_module_name: str) -> None:
     global _ytdl_module
-    if _ytdl_module:
+    if _ytdl_module is not _NOT_SET:
         raise YoutubeDLError('already initialized')
     try:
         _ytdl_module = importlib.import_module(ytdl_module_name)
@@ -99,18 +104,36 @@ def import_from(module_name, names):
 
 
 def get_all_extractors(*, include_generic: bool):
+    _check_initialized()
     global _extractors
-    if _extractors is None:
-        extractor_module = import_module('extractor')
-        _extractors = tuple(extractor_module._ALL_CLASSES)
+    if _extractors is _NOT_SET:
+        _extractors = tuple(import_module('extractor')._ALL_CLASSES)
     if include_generic:
         return _extractors
     return _extractors[:-1]
 
 
+def _get_real_extractor(extractor):
+    global _lazy_load_extractor_base
+    if _lazy_load_extractor_base is None:
+        return extractor
+    if _lazy_load_extractor_base is _NOT_SET:
+        try:
+            _lazy_load_extractor_base = import_from(
+                'extractor.lazy_extractors', 'LazyLoadExtractor')
+        except ImportError:
+            _lazy_load_extractor_base = None
+            return extractor
+    if not issubclass(extractor, _lazy_load_extractor_base):
+        return extractor
+    if 'real_class' in _lazy_load_extractor_base.__dict__:
+        return extractor.real_class
+    if '_get_real_class' in _lazy_load_extractor_base.__dict__:
+        return extractor._get_real_class()
+    return extractor
+
+
 def _get_extractor_name(extractor):
-    if hasattr(extractor, '_get_real_class'):
-        extractor = extractor._get_real_class()
     ie_name = extractor.IE_NAME
     if isinstance(ie_name, property):
         return extractor().IE_NAME
@@ -120,6 +143,7 @@ def _get_extractor_name(extractor):
 def _build_extractors_registry():
     registry = {}
     for extractor in get_all_extractors(include_generic=True):
+        extractor = _get_real_extractor(extractor)
         name_parts = _get_extractor_name(extractor).split(':')
         name_parts.reverse()
         _store_extractor_in_registry(extractor, name_parts, registry)
@@ -168,8 +192,9 @@ def _get_extractors_from_registry(name_parts, registry):
 
 
 def get_extractors_by_name(name):
+    _check_initialized()
     global _extractors_registry
-    if _extractors_registry is None:
+    if _extractors_registry is _NOT_SET:
         _extractors_registry = _build_extractors_registry()
     name_parts = name.split(':')
     name_parts.reverse()
