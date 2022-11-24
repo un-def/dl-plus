@@ -13,8 +13,8 @@ class BackendInstallCommand(BaseInstallCommand):
 
     arguments = (
         Arg(
-            'name', metavar='NAME', nargs='?', default='youtube_dl',
-            help='Backend name. Default is youtube_dl.'
+            'name', metavar='NAME',
+            help='Backend name.'
         ),
         Arg(
             'version', nargs='?', metavar='VERSION',
