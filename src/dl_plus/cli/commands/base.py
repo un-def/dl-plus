@@ -48,6 +48,8 @@ class Command(_CommandBase):
     def run(self) -> None:
         raise NotImplementedError
 
+    print = print
+
 
 class CommandGroup(_CommandBase):
 
@@ -85,26 +87,26 @@ class BaseInstallCommand(Command):
         client = PyPIClient()
         name, version = self.get_name_version_tuple()
         wheel = client.fetch_wheel_info(name, version)
-        print(f'Found remote version: {wheel.name} {wheel.version}')
+        self.print(f'Found remote version: {wheel.name} {wheel.version}')
         output_dir = self.get_output_dir(wheel)
         if output_dir.exists():
             installed_metadata = load_metadata(output_dir)
             if installed_metadata:
-                print(
+                self.print(
                     f'Found installed version: {installed_metadata.name} '
                     f'{installed_metadata.version}'
                 )
                 if installed_metadata.version == wheel.version:
-                    print('The same version is already installed')
+                    self.print('The same version is already installed')
                     if not self.args.force:
-                        print('Nothing to do')
+                        self.print('Nothing to do')
                         return
-                    print('Forcing installation')
+                    self.print('Forcing installation')
             shutil.rmtree(output_dir)
-        print('Installing')
+        self.print('Installing')
         os.makedirs(output_dir)
         with client.download_file(wheel.url, wheel.sha256) as fobj:
             with zipfile.ZipFile(fobj) as zfobj:
                 zfobj.extractall(output_dir)
         save_metadata(output_dir, wheel.metadata)
-        print('Done')
+        self.print('Done')

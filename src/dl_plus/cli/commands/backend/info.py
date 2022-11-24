@@ -15,11 +15,11 @@ class BackendInfoCommand(Command):
     def run(self):
         backend = self.args.backend or self.config.backend
         backend_info = init_backend(backend)
-        print('import name:', backend_info.import_name)
-        print('version:', backend_info.version)
-        print('path:', str(backend_info.path))
-        print('managed:', 'yes' if backend_info.is_managed else 'no')
+        self.print('import name:', backend_info.import_name)
+        self.print('version:', backend_info.version)
+        self.print('path:', str(backend_info.path))
+        self.print('managed:', 'yes' if backend_info.is_managed else 'no')
         metadata = backend_info.metadata
         if metadata:
-            print('project name:', metadata.name)
-            print('project version:', metadata.version)
+            self.print('project name:', metadata.name)
+            self.print('project version:', metadata.version)
