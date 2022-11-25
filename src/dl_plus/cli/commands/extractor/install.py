@@ -35,6 +35,7 @@ class ExtractorInstallCommand(BaseInstallCommand):
     plugin: str
 
     def init(self):
+        super().init()
         plugin_name = self.args.name
         match = PLUGIN_NAME_REGEX.fullmatch(plugin_name)
         if not match:
@@ -44,9 +45,12 @@ class ExtractorInstallCommand(BaseInstallCommand):
     def get_output_dir(self, wheel: Wheel) -> Path:
         return get_extractor_plugin_dir(self.ns, self.plugin)
 
-    def get_name_version_tuple(self) -> Tuple[str, Optional[str]]:
+    def get_project_name_version_tuple(self) -> Tuple[str, Optional[str]]:
         return (
             f'dl-plus-extractor-{self.ns}-{self.plugin}', self.args.version)
+
+    def get_short_name(self) -> str:
+        return self.args.name
 
     def get_force_flag(self) -> bool:
         return self.args.force

@@ -60,7 +60,7 @@ def save_metadata(backend_dir: Path, metadata: Metadata) -> None:
         json.dump(metadata, fobj)
 
 
-def load_metadata(backend_dir: Path) -> Metadata:
+def load_metadata(backend_dir: Path) -> Optional[Metadata]:
     try:
         with open(backend_dir / 'metadata.json') as fobj:
             return Metadata(json.load(fobj))

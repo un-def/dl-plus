@@ -29,8 +29,11 @@ class BackendInstallCommand(BaseInstallCommand):
     def get_output_dir(self, wheel: Wheel) -> Path:
         return backend.get_backend_dir(wheel.name)
 
-    def get_name_version_tuple(self) -> Tuple[str, Optional[str]]:
+    def get_project_name_version_tuple(self) -> Tuple[str, Optional[str]]:
         return (self.args.name, self.args.version)
+
+    def get_short_name(self) -> str:
+        return self.args.name
 
     def get_force_flag(self) -> bool:
         return self.args.force
