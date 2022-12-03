@@ -1,6 +1,7 @@
 from dl_plus.cli.commands.base import CommandGroup
 
 from .install import ExtractorInstallCommand
+from .update import ExtractorUpdateCommand
 
 
 class ExtractorCommandGroup(CommandGroup):
@@ -9,4 +10,5 @@ class ExtractorCommandGroup(CommandGroup):
 
     commands = (
         ExtractorInstallCommand,
+        ExtractorUpdateCommand,
     )

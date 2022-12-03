@@ -1,18 +1,16 @@
-import re
-from pathlib import Path
+from __future__ import annotations
+
 from typing import Optional, Tuple
 
 from dl_plus.cli.args import Arg
-from dl_plus.cli.commands.base import BaseInstallCommand, CommandError
-from dl_plus.core import get_extractor_plugin_dir
-from dl_plus.pypi import Wheel
+from dl_plus.cli.commands.base import BaseInstallCommand
+
+from .base import ExtractorInstallUpdateCommandMixin
 
 
-PLUGIN_NAME_REGEX = re.compile(
-    r'^(?:dl-plus-extractor-)?(?P<ns>[a-z0-9]+)[/-](?P<plugin>[a-z0-9]+)$')
-
-
-class ExtractorInstallCommand(BaseInstallCommand):
+class ExtractorInstallCommand(
+    ExtractorInstallUpdateCommandMixin, BaseInstallCommand,
+):
 
     short_description = 'Install extractor plugin'
 
@@ -31,26 +29,8 @@ class ExtractorInstallCommand(BaseInstallCommand):
         ),
     )
 
-    ns: str
-    plugin: str
-
-    def init(self):
-        super().init()
-        plugin_name = self.args.name
-        match = PLUGIN_NAME_REGEX.fullmatch(plugin_name)
-        if not match:
-            raise CommandError(f'Invalid extractor plugin name: {plugin_name}')
-        self.ns, self.plugin = match.groups()
-
-    def get_output_dir(self, wheel: Wheel) -> Path:
-        return get_extractor_plugin_dir(self.ns, self.plugin)
-
     def get_project_name_version_tuple(self) -> Tuple[str, Optional[str]]:
-        return (
-            f'dl-plus-extractor-{self.ns}-{self.plugin}', self.args.version)
-
-    def get_short_name(self) -> str:
-        return self.args.name
+        return (self.project_name, self.args.version)
 
     def get_force_flag(self) -> bool:
         return self.args.force

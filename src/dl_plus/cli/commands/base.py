@@ -6,13 +6,20 @@ import zipfile
 from argparse import Namespace
 from pathlib import Path
 from textwrap import dedent
-from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Type, Union
+from typing import (
+    TYPE_CHECKING, ClassVar, Dict, List, Optional, Sequence, Tuple, Type,
+    Union,
+)
 
-from dl_plus.cli.args import Arg
 from dl_plus.cli.args import dlp_config as dlp_config_arg
 from dl_plus.config import Config
 from dl_plus.exceptions import DLPlusException
 from dl_plus.pypi import PyPIClient, Wheel, load_metadata, save_metadata
+
+
+if TYPE_CHECKING:
+    from dl_plus.cli.args import Arg, ExclusiveArgGroup
+    from dl_plus.pypi import Metadata
 
 
 CommandOrGroup = Union['Command', 'CommandGroup']
@@ -45,7 +52,7 @@ class _CommandBase:
 
 
 class Command(_CommandBase):
-    arguments: ClassVar[Tuple[Arg, ...]] = ()
+    arguments: ClassVar[Tuple[Union[Arg, ExclusiveArgGroup], ...]] = ()
 
     config: Optional[Config] = None
     args: Namespace
@@ -102,24 +109,41 @@ class CommandError(DLPlusException):
     pass
 
 
-class BaseInstallCommand(Command):
+class BaseInstallUpdateCommand(Command):
     client: PyPIClient
 
     def get_output_dir(self, wheel: Wheel) -> Path:
-        raise NotImplementedError
-
-    def get_project_name_version_tuple(self) -> Tuple[str, Optional[str]]:
         raise NotImplementedError
 
     def get_short_name(self) -> str:
         """Return short name used for logging, command examples, etc."""
         raise NotImplementedError
 
+    def init(self) -> None:
+        self.client = PyPIClient()
+
+    def load_installed_metadata(self, output_dir: Path) -> Optional[Metadata]:
+        if not output_dir.exists():
+            return None
+        return load_metadata(output_dir)
+
+    def install_wheel(self, wheel: Wheel, output_dir: Path) -> None:
+        if output_dir.exists():
+            shutil.rmtree(output_dir)
+        os.makedirs(output_dir)
+        with self.client.download_file(wheel.url, wheel.sha256) as fobj:
+            with zipfile.ZipFile(fobj) as zfobj:
+                zfobj.extractall(output_dir)
+        save_metadata(output_dir, wheel.metadata)
+
+
+class BaseInstallCommand(BaseInstallUpdateCommand):
+
+    def get_project_name_version_tuple(self) -> Tuple[str, Optional[str]]:
+        raise NotImplementedError
+
     def get_force_flag(self) -> bool:
         return False
-
-    def init(self):
-        self.client = PyPIClient()
 
     def run(self):
         name, version = self.get_project_name_version_tuple()
@@ -127,10 +151,7 @@ class BaseInstallCommand(Command):
         self.print(f'Found remote version: {wheel.name} {wheel.version}')
 
         output_dir = self.get_output_dir(wheel)
-        installed_metadata = None
-        if output_dir.exists():
-            installed_metadata = load_metadata(output_dir)
-
+        installed_metadata = self.load_installed_metadata(output_dir)
         if not installed_metadata:
             self.install(wheel, output_dir)
             return
@@ -144,7 +165,7 @@ class BaseInstallCommand(Command):
         if not version:
             short_name = self.get_short_name()
             command_prefix = ' '.join(self.get_command_path()[:-1])
-            self.print(f'{short_name} already installed')
+            self.print(f'{short_name} is already installed')
             if not is_latest_installed:
                 self.print(
                     f'Use `{command_prefix} update {short_name}` '
@@ -158,20 +179,51 @@ class BaseInstallCommand(Command):
 
         if is_latest_installed:
             self.print('The same version is already installed')
-            if not self.args.force:
+            if not self.get_force_flag():
                 self.print('Use `--force` to reinstall')
                 return
             self.print('Forcing installation')
 
         self.install(wheel, output_dir)
 
-    def install(self, wheel: Wheel, output_dir: Path):
+    def install(self, wheel: Wheel, output_dir: Path) -> None:
         self.print('Installing')
-        if output_dir.exists():
-            shutil.rmtree(output_dir)
-        os.makedirs(output_dir)
-        with self.client.download_file(wheel.url, wheel.sha256) as fobj:
-            with zipfile.ZipFile(fobj) as zfobj:
-                zfobj.extractall(output_dir)
-        save_metadata(output_dir, wheel.metadata)
-        self.print('Done')
+        self.install_wheel(wheel, output_dir)
+        self.print('Installed')
+
+
+class BaseUpdateCommand(BaseInstallUpdateCommand):
+
+    def get_project_name(self) -> str:
+        raise NotImplementedError
+
+    def run(self):
+        name = self.get_project_name()
+        wheel = self.client.fetch_wheel_info(name)
+        self.print(f'Found remote version: {wheel.name} {wheel.version}')
+
+        output_dir = self.get_output_dir(wheel)
+        installed_metadata = self.load_installed_metadata(output_dir)
+        if not installed_metadata:
+            command_prefix = ' '.join(self.get_command_path()[:-1])
+            short_name = self.get_short_name()
+            self.print(
+                f'{short_name} is not installed, use '
+                f'`{command_prefix} install {short_name} [VERSION]` to install'
+            )
+            return
+
+        self.print(
+            f'Found installed version: {installed_metadata.name} '
+            f'{installed_metadata.version}'
+        )
+        if installed_metadata.version == wheel.version:
+            self.print('The latest version is already installed')
+            return
+
+        self.update(wheel, output_dir)
+
+    def update(self, wheel: Wheel, output_dir: Path) -> None:
+        self.print('Updating')
+        self.install_wheel(wheel, output_dir)
+        self.print('Updated')
