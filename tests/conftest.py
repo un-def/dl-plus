@@ -1,10 +1,10 @@
 import pytest
 
-from dl_plus import ytdl
+from dl_plus.backend import init_backend
 
 
 def pytest_configure():
-    ytdl.init('youtube_dl')
+    init_backend(':autodetect:')
 
 
 @pytest.fixture

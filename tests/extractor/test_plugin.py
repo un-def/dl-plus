@@ -3,6 +3,7 @@ import string
 
 import pytest
 
+from dl_plus import ytdl
 from dl_plus.extractor import Extractor
 from dl_plus.extractor.plugin import ExtractorPlugin, ExtractorPluginError
 
@@ -114,7 +115,7 @@ class TestRegister:
             self.plugin.register(extractor)
 
     def test_error_bad_superclass(self):
-        from youtube_dl.extractor.common import InfoExtractor
+        InfoExtractor = ytdl.import_from('extractor.common', 'InfoExtractor')
         extractor = create_extractor(InfoExtractor)
         with pytest.raises(ExtractorPluginError, match='subclass expected'):
             self.plugin.register(extractor)
