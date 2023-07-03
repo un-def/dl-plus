@@ -1,8 +1,14 @@
+from __future__ import annotations
+
 import argparse
-from typing import List
+from typing import TYPE_CHECKING, List, Type
 
 from .commands import RootCommandGroup
 from .commands.base import CommandGroup
+
+
+if TYPE_CHECKING:
+    from .commands.base import Command
 
 
 __all__ = ['run_command']
@@ -33,11 +39,14 @@ class CommandArgParser(argparse.ArgumentParser):
             'formatter_class', argparse.RawDescriptionHelpFormatter)
         super().__init__(*args, **kwargs)
 
-    def add_command_arguments(self, command):
+    def add_command_arguments(self, command: Type[Command]):
+        for parent in command.get_parents():
+            for arg in parent.arguments:
+                arg.add_to_parser(self)
         for arg in command.arguments:
             arg.add_to_parser(self)
 
-    def add_command_group(self, command_group):
+    def add_command_group(self, command_group: Type[CommandGroup]):
         command_group_subparsers = self.add_command_group_subparsers(
             title=command_group.short_description)
         for command_or_group in command_group.commands:

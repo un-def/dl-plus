@@ -29,8 +29,11 @@ class _CommandBase:
     name: ClassVar[str]
     short_description: ClassVar[Optional[str]] = None
     long_description: ClassVar[Optional[str]] = None
+    arguments: ClassVar[Tuple[Union[Arg, ExclusiveArgGroup], ...]] = ()
 
     parent: ClassVar[Optional[Type[CommandGroup]]] = None
+
+    _parents: ClassVar[Tuple[Type[CommandGroup], ...]]
 
     def __init_subclass__(cls):
         dct = cls.__dict__
@@ -41,19 +44,30 @@ class _CommandBase:
             long_description = dedent(long_description).rstrip() + '\n'
             setattr(cls, 'long_description', long_description)
 
-    def get_command_path(self) -> List[str]:
-        path: List[str] = [self.name]
-        assert self.parent
-        parent = self.parent
-        while parent:
-            path.append(parent.name)
-            parent = parent.parent
-        return path[-2::-1]
+    @classmethod
+    def get_parents(
+        cls, *, include_root: bool = True,
+    ) -> Tuple[Type[CommandGroup], ...]:
+        if '_parents' not in cls.__dict__:
+            parents = []
+            parent = cls.parent
+            assert parent
+            while parent:
+                parents.append(parent)
+                parent = parent.parent
+            cls._parents = tuple(reversed(parents))
+        if include_root:
+            return cls._parents
+        return cls._parents[1:]
+
+    def get_command_path(self, *, include_command: bool = True) -> List[str]:
+        path = [parent.name for parent in self.get_parents(include_root=False)]
+        if include_command:
+            path.append(self.name)
+        return path
 
 
 class Command(_CommandBase):
-    arguments: ClassVar[Tuple[Union[Arg, ExclusiveArgGroup], ...]] = ()
-
     config: Optional[Config] = None
     args: Namespace
 
@@ -164,7 +178,8 @@ class BaseInstallCommand(BaseInstallUpdateCommand):
 
         if not version:
             short_name = self.get_short_name()
-            command_prefix = ' '.join(self.get_command_path()[:-1])
+            command_prefix = ' '.join(
+                self.get_command_path(include_command=False))
             self.print(f'{short_name} is already installed')
             if not is_latest_installed:
                 self.print(
@@ -205,7 +220,8 @@ class BaseUpdateCommand(BaseInstallUpdateCommand):
         output_dir = self.get_output_dir(wheel)
         installed_metadata = self.load_installed_metadata(output_dir)
         if not installed_metadata:
-            command_prefix = ' '.join(self.get_command_path()[:-1])
+            command_prefix = ' '.join(
+                self.get_command_path(include_command=False))
             short_name = self.get_short_name()
             self.print(
                 f'{short_name} is not installed, use '
