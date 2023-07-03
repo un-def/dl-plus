@@ -11,7 +11,6 @@ from typing import (
     Union,
 )
 
-from dl_plus.cli.args import dlp_config as dlp_config_arg
 from dl_plus.config import Config
 from dl_plus.exceptions import DLPlusException
 from dl_plus.pypi import PyPIClient, Wheel, load_metadata, save_metadata
@@ -69,16 +68,12 @@ class _CommandBase:
 
 
 class Command(_CommandBase):
-    config: Optional[Config] = None
     args: Namespace
+
+    _config: Optional[Config] = None
 
     def __init__(self, args: Namespace) -> None:
         self.args = args
-        if dlp_config_arg in self.arguments:
-            config = Config()
-            if not args.no_dlp_config:
-                config.load(args.dlp_config)
-            self.config = config
         self.init()
 
     def init(self) -> None:
@@ -86,6 +81,15 @@ class Command(_CommandBase):
 
     def run(self) -> None:
         raise NotImplementedError
+
+    @property
+    def config(self) -> Config:
+        if self._config is None:
+            config = Config()
+            if not getattr(self.args, 'no_dlp_config', False):
+                config.load(getattr(self.args, 'dlp_config', None))
+            self._config = config
+        return self._config
 
     print = print
 
