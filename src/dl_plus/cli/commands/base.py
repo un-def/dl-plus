@@ -18,7 +18,7 @@ from dl_plus.pypi import PyPIClient, Wheel, load_metadata, save_metadata
 
 
 if TYPE_CHECKING:
-    from dl_plus.cli.args import Arg, ExclusiveArgGroup
+    from dl_plus.cli.args import Arg, ArgGroup, ExclusiveArgGroup
     from dl_plus.pypi import Metadata
 
 
@@ -29,7 +29,8 @@ class _CommandBase:
     name: ClassVar[str]
     short_description: ClassVar[Optional[str]] = None
     long_description: ClassVar[Optional[str]] = None
-    arguments: ClassVar[Tuple[Union[Arg, ExclusiveArgGroup], ...]] = ()
+    arguments: ClassVar[
+        Tuple[Union[Arg, ArgGroup, ExclusiveArgGroup], ...]] = ()
 
     parent: ClassVar[Optional[Type[CommandGroup]]] = None
 
