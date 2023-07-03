@@ -69,9 +69,3 @@ dlp_config = ExclusiveArgGroup(
     ),
     title='config options',
 )
-
-backend = Arg(
-    '--backend',
-    metavar='BACKEND',
-    help='youtube-dl backend.',
-)

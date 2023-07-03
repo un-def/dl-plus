@@ -51,7 +51,11 @@ def _get_main_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     cli_args.dlp_config.add_to_parser(parser)
-    cli_args.backend.add_to_parser(parser)
+    parser.add_argument(
+        '--backend',
+        metavar='BACKEND',
+        help='youtube-dl backend.',
+    )
     parser.add_argument(
         '--dlp-version',
         action='version',
