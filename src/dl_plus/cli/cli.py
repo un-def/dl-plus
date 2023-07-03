@@ -9,7 +9,7 @@ from dl_plus.config import Config
 from dl_plus.const import DL_PLUS_VERSION
 from dl_plus.exceptions import DLPlusException
 
-from . import args
+from . import args as cli_args
 
 
 __all__ = ['main']
@@ -50,8 +50,8 @@ def _get_main_parser() -> argparse.ArgumentParser:
         add_help=False,
         formatter_class=argparse.RawTextHelpFormatter,
     )
-    args.dlp_config.add_to_parser(parser)
-    args.backend.add_to_parser(parser)
+    cli_args.dlp_config.add_to_parser(parser)
+    cli_args.backend.add_to_parser(parser)
     parser.add_argument(
         '--dlp-version',
         action='version',

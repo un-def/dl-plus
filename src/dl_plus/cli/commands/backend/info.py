@@ -1,5 +1,5 @@
 from dl_plus.backend import init_backend
-from dl_plus.cli import args
+from dl_plus.cli import args as cli_args
 from dl_plus.cli.commands.base import Command
 
 
@@ -8,8 +8,7 @@ class BackendInfoCommand(Command):
     short_description = 'Show backend information'
 
     arguments = (
-        args.dlp_config,
-        args.backend,
+        cli_args.backend,
     )
 
     def run(self):

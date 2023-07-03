@@ -67,6 +67,7 @@ dlp_config = ExclusiveArgGroup(
         '--no-dlp-config', action='store_true',
         help='Do not read dl-plus config.',
     ),
+    title='config options',
 )
 
 backend = Arg(
