@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import enum
 import sys
-from collections import namedtuple
 from pathlib import Path
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable, NamedTuple, Optional
 
 from dl_plus import ytdl
 from dl_plus.config import get_config_home
@@ -11,14 +11,39 @@ from dl_plus.exceptions import DLPlusException
 from dl_plus.pypi import load_metadata
 
 
+if TYPE_CHECKING:
+    from .pypi import Metadata
+
+
 backends_dir = get_config_home() / 'backends'
 
 
-BackendInfo = namedtuple(
-    'BackendInfo', 'import_name,version,path,is_managed,metadata')
+class Backend(NamedTuple):
+    # a name of the project ("distribution" in PyPA terms)
+    # *.dist-info/METADATA->Name
+    project_name: str
+    # a name of the root package directory
+    # *.dist-info/top_level.txt
+    import_name: str
+    # a name of the the executable script
+    # *.dist-info/entry_points.txt->console_scripts).
+    executable_name: str
 
 
-_AUTODETECT_CANDIDATES = ('youtube_dl', 'yt_dlp', 'youtube_dlc')
+class KnownBackend(Backend, enum.Enum):
+    # NB: the order of members does matter: _autodetect_backend()
+    # builds a list of candidates from this enumeration.
+    YT_DLP = ('yt-dlp', 'yt_dlp', 'yt-dlp')
+    YOUTUBE_DL = ('youtube-dl', 'youtube_dl', 'youtube-dl')
+    YOUTUBE_DLC = ('youtube-dlc', 'youtube_dlc', 'youtube-dlc')
+
+
+class BackendInfo(NamedTuple):
+    import_name: str
+    version: str
+    path: Path
+    is_managed: bool
+    metadata: Optional[Metadata]
 
 
 class BackendError(DLPlusException):
@@ -76,12 +101,13 @@ def _init_backend(backend_string: str) -> Path | None:
 
 
 def _autodetect_backend() -> Path | None:
-    for candidate in _AUTODETECT_CANDIDATES:
+    candidates = [backend.import_name for backend in KnownBackend]
+    for candidate in candidates:
         try:
             return _init_backend(candidate)
         except DLPlusException:
             pass
-    raise AutodetectFailed(_AUTODETECT_CANDIDATES)
+    raise AutodetectFailed(candidates)
 
 
 def init_backend(backend_string: str) -> BackendInfo:
