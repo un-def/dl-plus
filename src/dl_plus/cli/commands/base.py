@@ -91,6 +91,9 @@ class Command(_CommandBase):
             self._config = config
         return self._config
 
+    def die(self, message: str) -> None:
+        raise CommandError(message)
+
     print = print
 
 

@@ -15,8 +15,7 @@ class BackendInfoCommand(Command):
     )
 
     def run(self):
-        backend = self.args.name or self.config.backend
-        backend_info = init_backend(backend)
+        backend_info = init_backend(self.args.name or self.config.backend)
         self.print('import name:', backend_info.import_name)
         self.print('version:', backend_info.version)
         self.print('path:', str(backend_info.path))

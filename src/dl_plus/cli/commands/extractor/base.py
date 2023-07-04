@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import re
-from pathlib import Path
 from typing import TYPE_CHECKING
 
-from dl_plus.cli.commands.base import CommandError
 from dl_plus.core import get_extractor_plugin_dir
-from dl_plus.pypi import Wheel
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from dl_plus.cli.commands.base import BaseInstallUpdateCommand as _base
+    from dl_plus.pypi import Wheel
 else:
     _base = object
 
@@ -29,7 +29,7 @@ class ExtractorInstallUpdateCommandMixin(_base):
         plugin_name = self.args.name
         match = PLUGIN_NAME_REGEX.fullmatch(plugin_name)
         if not match:
-            raise CommandError(f'Invalid extractor plugin name: {plugin_name}')
+            self.die(f'Invalid extractor plugin name: {plugin_name}')
         self.ns, self.plugin = match.groups()
         self.project_name = f'dl-plus-extractor-{self.ns}-{self.plugin}'
 
