@@ -1,10 +1,10 @@
 import argparse
-import os.path
+import pathlib
 import sys
 from textwrap import dedent
 
 from dl_plus import core, ytdl
-from dl_plus.backend import init_backend
+from dl_plus.backend import KnownBackend, init_backend
 from dl_plus.config import Config
 from dl_plus.const import DL_PLUS_VERSION
 from dl_plus.exceptions import DLPlusException
@@ -22,8 +22,13 @@ def _dedent(text):
     return dedent(text).strip()
 
 
-def _is_running_as_youtube_dl(program_name: str) -> bool:
-    return os.path.basename(program_name) in ['youtube-dl', 'youtube-dl.exe']
+def _detect_compat_mode(program_name: str) -> bool:
+    path = pathlib.Path(program_name)
+    if path.suffix == '.exe':
+        name = path.stem
+    else:
+        name = path.name
+    return name in (backend.executable_name for backend in KnownBackend)
 
 
 class _MainArgParser(argparse.ArgumentParser):
@@ -87,7 +92,7 @@ def _main(argv):
     args = argv[1:]
     if '-U' in args or '--update' in args:
         raise DLPlusException('update is not yet supported')
-    compat_mode = _is_running_as_youtube_dl(argv[0])
+    compat_mode = _detect_compat_mode(argv[0])
     config = Config()
     backend = None
     if not compat_mode:
