@@ -13,8 +13,8 @@ DEFAULT_CONFIG = """
 backend = :autodetect:
 
 [extractors.enable]
-:builtins:
 :plugins:
+:builtins:
 generic
 """
 
