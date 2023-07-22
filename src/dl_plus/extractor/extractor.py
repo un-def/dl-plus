@@ -27,6 +27,11 @@ class Extractor(InfoExtractor):
 
     @classmethod
     def dlp_match(cls, url: str) -> Optional[Match[str]]:
+        # yt-dlp has a similar method (since 5ad28e7)
+        match_valid_url = getattr(cls, '_match_valid_url', None)
+        if match_valid_url is not None:
+            return match_valid_url(url)
+        # fallback for o.g. youtube-dl and other forks
         # a copy/paste from youtube-dl
         if '_VALID_URL_RE' not in cls.__dict__:
             cls._VALID_URL_RE = re.compile(cls._VALID_URL)
