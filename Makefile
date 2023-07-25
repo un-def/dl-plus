@@ -8,7 +8,7 @@ clean:
 
 .PHONY: dist
 dist: clean
-	$(PYTHON) setup.py sdist bdist_wheel
+	$(PYTHON) -m build
 
 .PHONY: exe
 exe: clean

@@ -1,0 +1,9 @@
+[flake8]
+filename =
+    ./setup.py
+    ./src/**.py
+    ./tests/**.py
+    ./scripts/**.py
+    ./dl-plus.spec
+show_source = true
+statistics = true

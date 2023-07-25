@@ -1,6 +1,7 @@
 import pytest
 
 from dl_plus.core import get_extractors
+
 from tests.testlib import ExtractorMock as EM
 
 

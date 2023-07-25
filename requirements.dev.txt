@@ -3,3 +3,4 @@ isort
 mypy
 pytest
 tox
+build
