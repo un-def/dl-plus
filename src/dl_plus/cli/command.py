@@ -68,9 +68,8 @@ class CommandArgParser(argparse.ArgumentParser):
         kwargs.setdefault('dest', _COMMAND_DEST)
         kwargs.setdefault('metavar', 'COMMAND')
         kwargs.setdefault('parser_class', self.__class__)
-        # Python 3.6 — add_subparsers(required=...) is not supported
+        kwargs.setdefault('required', True)
         subparsers = self.add_subparsers(*args, **kwargs)
-        subparsers.required = True
         return subparsers
 
 
