@@ -1,10 +1,11 @@
 import pytest
 
 from dl_plus.backend import init_backend
+from dl_plus.config import Option
 
 
 def pytest_configure():
-    init_backend(':autodetect:')
+    init_backend(Option.Backend.AUTODETECT)
 
 
 @pytest.fixture

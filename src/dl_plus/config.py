@@ -1,3 +1,4 @@
+import enum
 import itertools
 import os
 import shlex
@@ -8,14 +9,32 @@ from typing import List, Optional, Union
 from .exceptions import DLPlusException
 
 
-DEFAULT_CONFIG = """
+class _StrEnum(str, enum.Enum):
+    # enum.StrEnum is available since Python 3.11
+
+    def __str__(self) -> str:
+        return self.value
+
+
+class Option:
+
+    class Backend(_StrEnum):
+        AUTODETECT = ':autodetect:'
+
+    class Extractor(_StrEnum):
+        BUILTINS = ':builtins:'
+        PLUGINS = ':plugins:'
+        GENERIC = 'generic'
+
+
+DEFAULT_CONFIG = f"""
 [main]
-backend = :autodetect:
+backend = {Option.Backend.AUTODETECT}
 
 [extractors.enable]
-:plugins:
-:builtins:
-generic
+{Option.Extractor.PLUGINS}
+{Option.Extractor.BUILTINS}
+{Option.Extractor.GENERIC}
 """
 
 
@@ -83,7 +102,7 @@ class _Config(ConfigParser):
         )
 
 
-class Option:
+class _ConfigOption:
 
     __slots__ = ('section', 'option')
 
@@ -137,4 +156,4 @@ class Config(_Config):
         return list(itertools.chain.from_iterable(
             map(shlex.split, self.options('backend-options'))))
 
-    backend = Option('main', 'backend')
+    backend = _ConfigOption('main', 'backend')
