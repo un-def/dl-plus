@@ -4,7 +4,7 @@ A [youtube-dl][youtube-dl-website] extension with pluggable extractors
 
 ## Description
 
-`dl-plus` is an extension and a drop-in replacement of `youtube-dl`. The main goal of the project is to add an easy-to-use extractor plugin system to `youtube-dl` while maintaining full backward compatibility.
+`dl-plus` is an extension and a drop-in replacement of `youtube-dl` (or any compatible fork, e.g., `yt-dlp`). The main goal of the project is to add an easy-to-use extractor plugin system to `youtube-dl` while maintaining full backward compatibility.
 
 `dl-plus` is not a fork of `youtube-dl` and does not contain code from `youtube-dl`, it is a pure dynamic wrapper (thanks to Python dynamic nature) hacking some `youtube-dl` internals.
 
@@ -31,29 +31,27 @@ A [youtube-dl][youtube-dl-website] extension with pluggable extractors
     chmod a+x dl-plus
     ```
 
-2.  Install `youtube-dl` or any compatible package (fork):
+2.  Install a backend — `youtube-dl` or any compatible package (fork), e.g., `yt-dlp`:
 
     * using `dl-plus` itself:
 
       ```
-      dl-plus --cmd backend install
+      dl-plus --cmd backend install yt-dlp
       ```
 
     * using [pipx][pipx-website]:
 
       ```
-      pipx inject dl-plus youtube-dl
+      pipx inject dl-plus yt-dlp
       ```
 
     * using pip:
 
       ```
-      pip install youtube-dl
+      pip install yt-dlp
       ```
 
-    **NOTE**: if you use a fork where an import path was changed (it is `youtube_dl` by default), you'll need to configure a backend using the config file or the `--backend` command line option.
-
-3.  (optional) Install some plugins:
+3.  (optional) Install some extractor plugins:
 
     * using `dl-plus` itself:
 
