@@ -1,10 +1,12 @@
 PYTHON := python3
+SRC_DIR := src
 SCRIPTS_DIR := scripts
 
 .PHONY:	clean
 clean:
-	find -name '*.py[co]' -delete
-	rm -rf build dist src/*.egg-info
+	find $(SRC_DIR) -depth -name '__pycache__' -type d -exec rm -rf '{}' \;
+	find $(SRC_DIR) -name '*.py[co]' -type f -delete
+	rm -rf build dist $(SRC_DIR)/*.egg-info
 
 .PHONY: dist
 dist: clean
