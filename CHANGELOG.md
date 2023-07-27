@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.6.0 (UNRELEASED)
+
+### Breaking Changes
+
+  * Dropped support for Python 3.6, 3.7.
+  * **(CLI)** The `backend install` `NAME` argument is now required. `youtube-dl` is no longer the default backend to install.
+  * **(CLI)** The `backend info` `--backend` option was replaced by a positional argument (`backend info --backend=yt-dlp` → `backend info yt-dlp`).
+
+### Features
+
+  * Added support for Python 3.10, 3.11.
+  * Backend autodetection. If the `backend` option is set to `:autodetect:`, `dl-plus` tries to initialize any known backend in the following order: `yt-dlp`, `youtube-dl`, `youtube-dlc`.
+  * **(Config)** The default value of the `backend` option was changed from `youtube-dl` to `:autodetect:`.
+  * **(CLI)** New commands: `backend update` and `extractor update`.
+  * **(Extractor API)** Added an implementation of `Extractor._match_valid_url()` (introduced in `yt-dlp`) for backends that do not yet support it.
+
+### Changes
+
+  * **(CLI)** The `backend install` and `extractor install` commands no longer update backends/extractors if they are already installed. `backend update`/`extractor update` should be used in that case.
+  * **(Config)** The default order of extractors was changed to `:plugins:`, `:builtins:`, `generic`. It was not possible to override any built–in extractor with an extractor provided by a plugin when `:builtins:` had a higher priority than `:plugins:`.
+
+### Deprecations
+
+  * **(Extractor API)** `Extractor.dlp_match()` is deprecated, `Extractor._match_valid_url()` should be used instead.
+
+### Fixes
+
+  * Added a workaround for lazy extractors.
+  * **(Extractor API)** `Extractor.dlp_match()` is now compatible with `yt-dlp`.
+
+### Improvements
+
+  * **(CLI)** Improved compat mode detection. All known backends are checked now, not only `youtube-dl`.
+
 ## 0.5.0
 
 ### Features
