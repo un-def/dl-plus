@@ -7,6 +7,8 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import List, Mapping, Optional, Union
 
+from dl_plus import deprecated
+
 from .exceptions import DLPlusException
 
 
@@ -52,7 +54,19 @@ class _Environ:
 _environ = _Environ(os.environ)
 
 
-class Option:
+class Section(_StrEnum):
+    MAIN = 'main'
+    EXTRACTORS = 'extractors'
+    BACKEND_OPTIONS = 'backend-options'
+
+    DEPRECATED_EXTRACTORS = 'extractors.enable'
+
+
+class Option(_StrEnum):
+    BACKEND = 'backend'
+
+
+class ConfigValue:
 
     class Backend(_StrEnum):
         AUTODETECT = ':autodetect:'
@@ -64,13 +78,13 @@ class Option:
 
 
 DEFAULT_CONFIG = f"""
-[main]
-backend = {Option.Backend.AUTODETECT}
+[{Section.MAIN}]
+{Option.BACKEND} = {ConfigValue.Backend.AUTODETECT}
 
-[extractors.enable]
-{Option.Extractor.PLUGINS}
-{Option.Extractor.BUILTINS}
-{Option.Extractor.GENERIC}
+[{Section.EXTRACTORS}]
+{ConfigValue.Extractor.PLUGINS}
+{ConfigValue.Extractor.BUILTINS}
+{ConfigValue.Extractor.GENERIC}
 """
 
 
@@ -138,7 +152,7 @@ class _Config(ConfigParser):
         )
 
 
-class _ConfigOption:
+class _ConfigOptionProxy:
 
     __slots__ = ('section', 'option')
 
@@ -146,16 +160,19 @@ class _ConfigOption:
         self.section = section
         self.option = option
 
-    def __get__(self, instance, owner):
+    def __get__(self, instance: 'Config', owner):
         if instance is None:
             return self
         return instance.get(self.section, self.option)
 
+    def __set__(self, instance: 'Config', value: str):
+        instance.set(self.section, self.option, value)
+
 
 class Config(_Config):
 
-    _UPDATE_SECTIONS = ('main',)
-    _REPLACE_SECTIONS = ('extractors.enable', 'backend-options')
+    _UPDATE_SECTIONS = (Section.MAIN,)
+    _REPLACE_SECTIONS = (Section.EXTRACTORS, Section.BACKEND_OPTIONS)
 
     def __init__(self) -> None:
         super().__init__()
@@ -181,14 +198,27 @@ class Config(_Config):
                 config.read_file(fobj)
         except (OSError, ValueError) as exc:
             raise ConfigError(f'failed to load config: {exc}') from exc
+        self._process_deprecated_extractors_section(config)
         for section in self._UPDATE_SECTIONS:
             self._update_section(section, config, replace=False)
         for section in self._REPLACE_SECTIONS:
             self._update_section(section, config, replace=True)
 
+    def _process_deprecated_extractors_section(self, config: _Config) -> None:
+        try:
+            deprecated_extractors = config[Section.DEPRECATED_EXTRACTORS]
+        except KeyError:
+            return
+        deprecated.warn(
+            'deprecated config section name: '
+            'rename [extractors.enable] to [extractors]'
+        )
+        if not config.has_section(Section.EXTRACTORS):
+            config[Section.EXTRACTORS] = deprecated_extractors
+
     def load_from_environ(self) -> None:
         if backend := _environ.BACKEND:
-            self.set('main', 'backend', backend)
+            self.backend = backend
 
     def _update_section(
         self, name: str, config: _Config, replace: bool,
@@ -202,10 +232,15 @@ class Config(_Config):
             section.clear()
         section.update(config[name])
 
-    def get_backend_options(self) -> Optional[List[str]]:
-        if 'backend-options' not in self:
+    backend = _ConfigOptionProxy(Section.MAIN, Option.BACKEND)
+
+    @property
+    def extractors(self) -> List[str]:
+        return self.options(Section.EXTRACTORS)
+
+    @property
+    def backend_options(self) -> Optional[List[str]]:
+        if not self.has_section(Section.BACKEND_OPTIONS):
             return None
         return list(itertools.chain.from_iterable(
-            map(shlex.split, self.options('backend-options'))))
-
-    backend = _ConfigOption('main', 'backend')
+            map(shlex.split, self.options(Section.BACKEND_OPTIONS))))

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, NamedTuple, Optional
 
 from dl_plus import ytdl
-from dl_plus.config import Option, get_config_home
+from dl_plus.config import ConfigValue, get_config_home
 from dl_plus.exceptions import DLPlusException
 from dl_plus.pypi import load_metadata
 
@@ -112,7 +112,7 @@ def _autodetect_backend() -> Path | None:
 
 
 def init_backend(backend_string: str) -> BackendInfo:
-    if backend_string == Option.Backend.AUTODETECT:
+    if backend_string == ConfigValue.Backend.AUTODETECT:
         backend_dir = _autodetect_backend()
     else:
         backend_dir = _init_backend(backend_string)

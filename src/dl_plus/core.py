@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Iterable, List, Set, Type
 
 from dl_plus import ytdl
-from dl_plus.config import Option, get_config_home
+from dl_plus.config import ConfigValue, get_config_home
 from dl_plus.extractor import machinery
 from dl_plus.extractor.peqn import PEQN
 
@@ -33,9 +33,9 @@ def get_extractors(names: Iterable[str]) -> List[Type['Extractor']]:
             added_search_paths.add(path_str)
 
     for name in names:
-        if name == Option.Extractor.BUILTINS:
+        if name == ConfigValue.Extractor.BUILTINS:
             extractors = ytdl.get_all_extractors(include_generic=False)
-        elif name == Option.Extractor.PLUGINS:
+        elif name == ConfigValue.Extractor.PLUGINS:
             extractor_plugins_dir = get_extractor_plugins_dir()
             if extractor_plugins_dir.is_dir():
                 for path in extractor_plugins_dir.iterdir():

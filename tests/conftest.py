@@ -13,7 +13,7 @@ def pytest_configure(config):
 
     import dl_plus.config
     from dl_plus.backend import init_backend
-    from dl_plus.config import Option
+    from dl_plus.config import ConfigValue
 
     dl_plus.config._config_home = pathlib.Path('fake-dl-plus-home')
-    init_backend(config.getoption('backend') or Option.Backend.AUTODETECT)
+    init_backend(config.getoption('backend') or ConfigValue.Backend.AUTODETECT)
