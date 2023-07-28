@@ -1,18 +1,19 @@
-import pytest
-
-from dl_plus.backend import init_backend
-from dl_plus.config import Option
+import os
+import pathlib
 
 
-def pytest_configure():
-    init_backend(Option.Backend.AUTODETECT)
+def pytest_addoption(parser):
+    parser.addoption('--backend')
 
 
-@pytest.fixture
-def config_home(tmp_path):
-    return tmp_path / 'dl_plus_home'
+def pytest_configure(config):
+    dlp_vars = [key for key in os.environ if key.startswith('DL_PLUS_')]
+    for dlp_var in dlp_vars:
+        del os.environ[dlp_var]
 
+    import dl_plus.config
+    from dl_plus.backend import init_backend
+    from dl_plus.config import Option
 
-@pytest.fixture(autouse=True)
-def _autopatch_config_home(monkeypatch, config_home):
-    monkeypatch.setattr('dl_plus.config._config_home', config_home)
+    dl_plus.config._config_home = pathlib.Path('fake-dl-plus-home')
+    init_backend(config.getoption('backend') or Option.Backend.AUTODETECT)

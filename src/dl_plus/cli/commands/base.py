@@ -86,8 +86,12 @@ class Command(_CommandBase):
     def config(self) -> Config:
         if self._config is None:
             config = Config()
-            if not getattr(self.args, 'no_dlp_config', False):
-                config.load(getattr(self.args, 'dlp_config', None))
+            config_file: Union[str, bool, None]
+            if getattr(self.args, 'no_dlp_config', False):
+                config_file = False
+            else:
+                config_file = getattr(self.args, 'dlp_config', None)
+            config.load(config_file)
             self._config = config
         return self._config
 

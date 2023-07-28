@@ -2,6 +2,7 @@ import argparse
 import pathlib
 import sys
 from textwrap import dedent
+from typing import Union
 
 from dl_plus import core, ytdl
 from dl_plus.backend import KnownBackend, init_backend
@@ -103,13 +104,17 @@ def _main(argv):
         parser = _get_main_parser()
         parsed_args, ytdl_args = parser.parse_known_args(args)
         backend = parsed_args.backend
-        if not parsed_args.no_dlp_config:
-            config.load(parsed_args.dlp_config)
+        config_file: Union[str, bool, None]
+        if parsed_args.no_dlp_config:
+            config_file = False
+        else:
+            config_file = parsed_args.dlp_config
+        config.load(config_file)
     else:
         ytdl_args = args
         config.load()
     if not backend:
-        backend = config['main']['backend']
+        backend = config.backend
     init_backend(backend)
     force_generic_extractor = False
     extractors = None

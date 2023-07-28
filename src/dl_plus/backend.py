@@ -15,9 +15,6 @@ if TYPE_CHECKING:
     from .pypi import Metadata
 
 
-backends_dir = get_config_home() / 'backends'
-
-
 class Backend(NamedTuple):
     # a name of the project ("distribution" in PyPA terms)
     # *.dist-info/METADATA->Name
@@ -63,7 +60,7 @@ class AutodetectFailed(BackendError):
 
 def _is_managed(location: Path) -> bool:
     try:
-        location.relative_to(backends_dir)
+        location.relative_to(get_backends_dir())
         return True
     except ValueError:
         return False
@@ -73,8 +70,12 @@ def _normalize(string: str) -> str:
     return string.replace('-', '_')
 
 
+def get_backends_dir() -> Path:
+    return get_config_home() / 'backends'
+
+
 def get_backend_dir(backend: str) -> Path:
-    return backends_dir / _normalize(backend)
+    return get_backends_dir() / _normalize(backend)
 
 
 def parse_backend_string(backend_string: str) -> tuple[Path | None, str]:

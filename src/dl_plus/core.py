@@ -12,11 +12,12 @@ if TYPE_CHECKING:
     from .extractor.extractor import Extractor
 
 
-extractor_plugins_dir = get_config_home() / 'extractors'
+def get_extractor_plugins_dir() -> Path:
+    return get_config_home() / 'extractors'
 
 
 def get_extractor_plugin_dir(ns: str, plugin: str) -> Path:
-    return extractor_plugins_dir / f'{ns}-{plugin}'
+    return get_extractor_plugins_dir() / f'{ns}-{plugin}'
 
 
 def get_extractors(names: Iterable[str]) -> List[Type['Extractor']]:
@@ -35,6 +36,7 @@ def get_extractors(names: Iterable[str]) -> List[Type['Extractor']]:
         if name == Option.Extractor.BUILTINS:
             extractors = ytdl.get_all_extractors(include_generic=False)
         elif name == Option.Extractor.PLUGINS:
+            extractor_plugins_dir = get_extractor_plugins_dir()
             if extractor_plugins_dir.is_dir():
                 for path in extractor_plugins_dir.iterdir():
                     maybe_add_search_path(path)
