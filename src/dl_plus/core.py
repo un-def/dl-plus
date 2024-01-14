@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Iterable, List, Set, Type
 
 from dl_plus import ytdl
-from dl_plus.config import ConfigValue, get_config_home
+from dl_plus.config import ConfigValue, get_data_home
 from dl_plus.extractor import machinery
 from dl_plus.extractor.peqn import PEQN
 
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 def get_extractor_plugins_dir() -> Path:
-    return get_config_home() / 'extractors'
+    return get_data_home() / 'extractors'
 
 
 def get_extractor_plugin_dir(ns: str, plugin: str) -> Path:

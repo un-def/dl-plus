@@ -6,18 +6,19 @@ import pytest
 from dl_plus.config import get_config_home
 
 
-@pytest.fixture
-def config_home():
-    # set dl_plus.config._config_home to None to disable caching
-    return None
-
-
 @pytest.fixture(autouse=True)
 def unset_config_home_envvar(monkeypatch):
+    monkeypatch.delenv('DL_PLUS_CONFIG_HOME', raising=False)
     monkeypatch.delenv('DL_PLUS_HOME', raising=False)
 
 
-def test_location_from_env(monkeypatch):
+def test_location_from_config_home_envvar(monkeypatch):
+    monkeypatch.setenv('DL_PLUS_CONFIG_HOME', '/dl/plus/config/home')
+    monkeypatch.setenv('DL_PLUS_HOME', '/dl/plus/home')  # should be ignored
+    assert get_config_home() == Path('/dl/plus/config/home')
+
+
+def test_location_from_home_envvar(monkeypatch):
     monkeypatch.setenv('DL_PLUS_HOME', '/dl/plus/home')
     assert get_config_home() == Path('/dl/plus/home')
 

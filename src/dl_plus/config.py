@@ -12,6 +12,9 @@ from dl_plus import deprecated
 from .exceptions import DLPlusException
 
 
+_IS_WIN = os.name == 'nt'
+
+
 class _StrEnum(str, enum.Enum):
     # enum.StrEnum is available since Python 3.11
 
@@ -20,23 +23,26 @@ class _StrEnum(str, enum.Enum):
 
 
 class _EnvironVariable:
-    PREFIX = 'DL_PLUS_'
+    __slots__ = ('names',)
 
-    __slots__ = ('name',)
+    def __init__(self, *names: str) -> None:
+        self.names = names
 
     def __get__(self, instance: Optional['_Environ'], owner) -> Optional[str]:
         if instance is None:
             return None
-        return instance.get(self.name)
-
-    def __set_name__(self, owner, name: str) -> None:
-        self.name = f'{self.PREFIX}{name}'
+        for name in self.names:
+            value = instance.get(name)
+            if value is not None:
+                return value
+        return None
 
 
 class _Environ:
-    HOME = _EnvironVariable()
-    CONFIG = _EnvironVariable()
-    BACKEND = _EnvironVariable()
+    CONFIG_HOME = _EnvironVariable('DL_PLUS_CONFIG_HOME', 'DL_PLUS_HOME')
+    DATA_HOME = _EnvironVariable('DL_PLUS_DATA_HOME', 'DL_PLUS_HOME')
+    CONFIG = _EnvironVariable('DL_PLUS_CONFIG')
+    BACKEND = _EnvironVariable('DL_PLUS_BACKEND')
 
     def __init__(self, environ: Mapping[str, str]) -> None:
         self._environ = MappingProxyType(environ)
@@ -93,6 +99,12 @@ class ConfigError(DLPlusException):
     pass
 
 
+def _get_win_app_data() -> Path:
+    if app_data := _environ.get('AppData'):
+        return Path(app_data)
+    return Path.home() / 'AppData' / 'Roaming'
+
+
 _config_home: Optional[Path] = None
 
 
@@ -100,16 +112,12 @@ def get_config_home() -> Path:
     global _config_home
     if _config_home:
         return _config_home
-    path_from_env = _environ.HOME
+    path_from_env = _environ.CONFIG_HOME
     if path_from_env:
         _config_home = Path(path_from_env).resolve()
         return _config_home
-    if os.name == 'nt':
-        app_data = _environ.get('AppData')
-        if app_data:
-            parent = Path(app_data)
-        else:
-            parent = Path.home() / 'AppData' / 'Roaming'
+    if _IS_WIN:
+        parent = _get_win_app_data()
     else:
         xdg_config_home = _environ.get('XDG_CONFIG_HOME')
         if xdg_config_home:
@@ -209,6 +217,7 @@ class Config(_Config):
             deprecated_extractors = config[Section.DEPRECATED_EXTRACTORS]
         except KeyError:
             return
+        # deprecated in 0.7
         deprecated.warn(
             'deprecated config section name: '
             'rename [extractors.enable] to [extractors]'
@@ -244,3 +253,46 @@ class Config(_Config):
             return None
         return list(itertools.chain.from_iterable(
             map(shlex.split, self.options(Section.BACKEND_OPTIONS))))
+
+
+_data_home: Optional[Path] = None
+
+
+def get_data_home() -> Path:
+    global _data_home
+    if _data_home:
+        return _data_home
+    path_from_env = _environ.DATA_HOME
+    if path_from_env:
+        _data_home = Path(path_from_env).resolve()
+        return _data_home
+    if _IS_WIN:
+        parent = _get_win_app_data()
+    else:
+        xdg_data_home = _environ.get('XDG_DATA_HOME')
+        if xdg_data_home:
+            parent = Path(xdg_data_home)
+        else:
+            parent = Path.home() / '.local' / 'share'
+    _data_home = (parent / 'dl-plus').resolve()
+
+    # deprecated in 0.7
+    if not _IS_WIN and not _data_home.exists():
+        use_config_home_as_data_home = False
+        config_home = get_config_home()
+        if (config_home / 'backends').exists():
+            deprecated.warn(
+                "deprecated backends location: move 'backends' directory "
+                f'from {config_home} to {_data_home}'
+            )
+            use_config_home_as_data_home = True
+        if (config_home / 'extractors').exists():
+            deprecated.warn(
+                "deprecated extractor plugins location: move 'extractors' "
+                f'directory from {config_home} to {_data_home}'
+            )
+            use_config_home_as_data_home = True
+        if use_config_home_as_data_home:
+            _data_home = config_home
+
+    return _data_home

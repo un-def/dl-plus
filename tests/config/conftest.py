@@ -2,10 +2,9 @@ import pytest
 
 
 @pytest.fixture
-def config_home(tmp_path):
-    _config_home = tmp_path / 'dl-plus-home'
-    _config_home.mkdir()
-    return _config_home
+def config_home():
+    # set dl_plus.config._config_home to None to disable caching
+    return None
 
 
 @pytest.fixture(autouse=True)

@@ -4,6 +4,13 @@ from dl_plus.config import Config
 
 
 @pytest.fixture
+def config_home(tmp_path):
+    _config_home = tmp_path / 'dl-plus-config-home'
+    _config_home.mkdir()
+    return _config_home
+
+
+@pytest.fixture
 def config():
     _config = Config()
     return _config

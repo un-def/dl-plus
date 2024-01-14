@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, NamedTuple, Optional
 
 from dl_plus import ytdl
-from dl_plus.config import ConfigValue, get_config_home
+from dl_plus.config import ConfigValue, get_data_home
 from dl_plus.exceptions import DLPlusException
 from dl_plus.pypi import load_metadata
 
@@ -71,7 +71,7 @@ def _normalize(string: str) -> str:
 
 
 def get_backends_dir() -> Path:
-    return get_config_home() / 'backends'
+    return get_data_home() / 'backends'
 
 
 def get_backend_dir(backend: str) -> Path:
