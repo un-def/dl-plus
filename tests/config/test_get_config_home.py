@@ -7,32 +7,28 @@ from dl_plus.config import get_config_home
 
 
 @pytest.fixture(autouse=True)
-def unset_config_home_envvar(monkeypatch):
+def _unset_config_home_envvar(monkeypatch):
     monkeypatch.delenv('DL_PLUS_CONFIG_HOME', raising=False)
     monkeypatch.delenv('DL_PLUS_HOME', raising=False)
-
-
-def test_location_from_config_home_envvar(monkeypatch):
-    monkeypatch.setenv('DL_PLUS_CONFIG_HOME', '/dl/plus/config/home')
-    monkeypatch.setenv('DL_PLUS_HOME', '/dl/plus/home')  # should be ignored
-    assert get_config_home() == Path('/dl/plus/config/home')
-
-
-def test_location_from_home_envvar(monkeypatch):
-    monkeypatch.setenv('DL_PLUS_HOME', '/dl/plus/home')
-    assert get_config_home() == Path('/dl/plus/home')
 
 
 @pytest.mark.skipif(
     not sys.platform.startswith('linux'), reason='requires linux')
 class TestLinux:
 
-    @pytest.fixture(autouse=True)
-    def monkeypatch_path_home(self, monkeypatch):
-        monkeypatch.setattr(Path, 'home', lambda: Path('/fakehome'))
+    def test_location_from_config_home_envvar(self, monkeypatch):
+        monkeypatch.setenv('DL_PLUS_CONFIG_HOME', '/dl/plus/config/home')
+        # should be ignored
+        monkeypatch.setenv('DL_PLUS_HOME', '/dl/plus/home')
+        assert get_config_home() == Path('/dl/plus/config/home')
+
+    def test_location_from_home_envvar(self, monkeypatch):
+        monkeypatch.setenv('DL_PLUS_HOME', '/dl/plus/home')
+        assert get_config_home() == Path('/dl/plus/home')
 
     def test_default_location_no_xdg_config_home_envvar(self, monkeypatch):
         monkeypatch.delenv('XDG_CONFIG_HOME', raising=False)
+        monkeypatch.setattr(Path, 'home', lambda: Path('/fakehome'))
         assert get_config_home() == Path('/fakehome/.config/dl-plus')
 
     def test_default_location_with_xdg_config_home_envvar(self, monkeypatch):
@@ -44,12 +40,19 @@ class TestLinux:
     not sys.platform.startswith('win'), reason='requires windows')
 class TestWindows:
 
-    @pytest.fixture(autouse=True)
-    def monkeypatch_path_home(self, monkeypatch):
-        monkeypatch.setattr(Path, 'home', lambda: Path('X:/fakehome'))
+    def test_location_from_config_home_envvar(self, monkeypatch):
+        monkeypatch.setenv('DL_PLUS_CONFIG_HOME', 'X:/dl/plus/config/home')
+        # should be ignored
+        monkeypatch.setenv('DL_PLUS_HOME', r'X:\dl\plus\home')
+        assert get_config_home() == Path('X:/dl/plus/config/home')
+
+    def test_location_from_home_envvar(self, monkeypatch):
+        monkeypatch.setenv('DL_PLUS_HOME', r'X:\dl\plus\home')
+        assert get_config_home() == Path('X:/dl/plus/home')
 
     def test_default_location_no_appdata_envvar(self, monkeypatch):
         monkeypatch.delenv('AppData', raising=False)
+        monkeypatch.setattr(Path, 'home', lambda: Path('X:/fakehome'))
         assert get_config_home() == Path('X:/fakehome/AppData/Roaming/dl-plus')
 
     def test_default_location_with_appdata_envvar(self, monkeypatch):
