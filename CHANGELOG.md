@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.7.0
+
+### Breaking Changes
+
+  * **(Config)** The `[extractors.enable]` section was renamed to `[extractors]`. The old name is still supported but deprecated. It is strongly recommended to update the config.
+  * On \*nix (more specifically, non-Windows) systems the default location for managed backends and extractor plugins was changed from `$XDG_CONFIG_HOME/dl-plus` to `$XDG_DATA_HOME/dl-plus`. The old location is still supported but deprecated. It is strongly recommended to either move the data to the new location or set the `DL_PLUS_DATA_HOME`/`DL_PLUS_HOME` environment variable to keep the old location.
+
+### Features
+
+  * Added support for Python 3.12.
+  * **(Env)** Added two new environment variables: `DL_PLUS_CONFIG_HOME` and `DL_PLUS_DATA_HOME`. These variables have higher priority than `DL_PLUS_HOME`.
+  `DL_PLUS_CONFIG_HOME` is a directory where the config file is stored. `DL_PLUS_DATA_HOME` is a directory where managed backends and extractor plugins are stored.
+  * **(Env)** Added a new environment variable `DL_PLUS_BACKEND`, which has higher priority than the config setting, but lower than the command line argument. The variable can be used, for example, to temporarily override the backend setting, especially if it is not possible/hard to do via the command line argument, e.g., `DL_PLUS_BACKEND=youtube-dl mpv https://...` can be used instead of `mpv --ytdl-raw-options=backend=youtube-dl mpv https://...`.
+
 ## 0.6.0
 
 ### Breaking Changes

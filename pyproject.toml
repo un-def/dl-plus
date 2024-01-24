@@ -6,9 +6,9 @@ build-backend = 'setuptools.build_meta'
 name = 'dl-plus'
 description = 'A youtube-dl extension with pluggable extractors'
 readme = 'README.md'
-license = {file = 'LICENSE'}
+license = {text = 'MIT'}
 authors = [
-    {name = 'un.def', email = 'me@undef.im'},
+    {name = 'Dmitry Meyer', email = 'me@undef.im'},
 ]
 classifiers = [
     'Development Status :: 4 - Beta',
