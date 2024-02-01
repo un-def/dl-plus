@@ -52,14 +52,18 @@ class TestLinux:
         return _config_home
 
     @pytest.mark.parametrize('data_dir', ['backends', 'extractors'])
-    def test_fallback_with_one_dir(self, config_home, data_dir):
+    def test_fallback_with_one_dir(
+        self, monkeypatch, tmp_path, config_home, data_dir,
+    ):
+        monkeypatch.setenv('XDG_DATA_HOME', str(tmp_path / 'xdgdata'))
         (config_home / data_dir).mkdir()
         with pytest.warns(DLPlusDeprecationWarning) as warn_record:
             assert get_data_home() == config_home
         assert len(warn_record) == 1
         assert f"move '{data_dir}' directory" in warn_record[0].message.args[0]
 
-    def test_fallback_with_both_dirs(self, config_home):
+    def test_fallback_with_both_dirs(self, monkeypatch, tmp_path, config_home):
+        monkeypatch.setenv('XDG_DATA_HOME', str(tmp_path / 'xdgdata'))
         (config_home / 'backends').mkdir()
         (config_home / 'extractors').mkdir()
         with pytest.warns(DLPlusDeprecationWarning) as warn_record:
@@ -68,9 +72,9 @@ class TestLinux:
         assert "move 'backends' directory" in warn_record[0].message.args[0]
         assert "move 'extractors' directory" in warn_record[1].message.args[0]
 
-    def test_no_fallback(self, monkeypatch):
-        monkeypatch.setenv('XDG_DATA_HOME', '/xdgdata')
-        assert get_data_home() == Path('/xdgdata/dl-plus')
+    def test_no_fallback(self, monkeypatch, tmp_path):
+        monkeypatch.setenv('XDG_DATA_HOME', str(tmp_path / 'xdgdata'))
+        assert get_data_home() == tmp_path / 'xdgdata' / 'dl-plus'
 
 
 @pytest.mark.skipif(
