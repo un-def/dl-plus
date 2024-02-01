@@ -1,18 +1,21 @@
 from __future__ import annotations
 
-import enum
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, NamedTuple, Optional
 
 from dl_plus import ytdl
-from dl_plus.config import ConfigValue, get_data_home
+from dl_plus.config import ConfigValue, _Config, get_config_home, get_data_home
 from dl_plus.exceptions import DLPlusException
 from dl_plus.pypi import load_metadata
 
 
 if TYPE_CHECKING:
     from .pypi import Metadata
+
+
+def _normalize(string: str) -> str:
+    return string.replace('-', '_')
 
 
 class Backend(NamedTuple):
@@ -27,12 +30,54 @@ class Backend(NamedTuple):
     executable_name: str
 
 
-class KnownBackend(Backend, enum.Enum):
-    # NB: the order of members does matter: _autodetect_backend()
-    # builds a list of candidates from this enumeration.
-    YT_DLP = ('yt-dlp', 'yt_dlp', 'yt-dlp')
-    YOUTUBE_DL = ('youtube-dl', 'youtube_dl', 'youtube-dl')
-    YOUTUBE_DLC = ('youtube-dlc', 'youtube_dlc', 'youtube-dlc')
+DEFAULT_BACKENDS_CONFIG = """
+[yt-dlp]
+project-name = yt-dlp
+import-name = yt_dlp
+executable-name = yt-dlp
+
+[youtube-dl-nightly]
+project-name = youtube-dl-nightly
+import-name = youtube_dl
+executable-name = youtube-dl
+
+[youtube-dl]
+project-name = youtube_dl
+import-name = youtube_dl
+executable-name = youtube-dl
+
+[youtube-dlc]
+project-name = youtube-dlc
+import-name = youtube_dlc
+executable-name = youtube-dlc
+"""
+
+
+def parse_backends_config(content: str) -> dict[str, Backend]:
+    config = _Config()
+    config.read_string(content)
+    backends = {}
+    for alias in config.sections():
+        backends[_normalize(alias)] = Backend(**{
+            _normalize(field): value
+            for field, value in config[alias].items()
+        })
+    return backends
+
+
+_known_backends: dict[str, Backend] | None = None
+
+
+def get_known_backends():
+    global _known_backends
+    if _known_backends is not None:
+        return _known_backends
+    _known_backends = parse_backends_config(DEFAULT_BACKENDS_CONFIG)
+    config_path = get_config_home() / 'backends.ini'
+    if config_path.is_file():
+        with open(config_path) as fobj:
+            _known_backends.update(parse_backends_config(fobj.read()))
+    return _known_backends
 
 
 class BackendInfo(NamedTuple):
@@ -66,10 +111,6 @@ def _is_managed(location: Path) -> bool:
         return False
 
 
-def _normalize(string: str) -> str:
-    return string.replace('-', '_')
-
-
 def get_backends_dir() -> Path:
     return get_data_home() / 'backends'
 
@@ -79,18 +120,28 @@ def get_backend_dir(backend: str) -> Path:
 
 
 def parse_backend_string(backend_string: str) -> tuple[Path | None, str]:
+    # backend_string is one of:
+    #   * alias ([section-name] in the backends.ini, e.g., 'yt-dlp');
+    #   * 'import_name', e.g., 'youtube_dl';
+    #   * 'project-name/import_name', e.g., 'youtube-dl-nightly/youtube_dl'.
     if '/' in backend_string:
-        backend, _, package_name = backend_string.partition('/')
-        backend_dir = get_backend_dir(backend)
+        project_name, _, import_name = backend_string.partition('/')
+        backend_dir = get_backend_dir(project_name)
         if not backend_dir.is_dir():
             raise BackendError(
                 f'{backend_dir} does not exist or is not a directory')
+    elif backend := get_known_backends().get(_normalize(backend_string)):
+        import_name = backend.import_name
+        backend_dir = get_backend_dir(backend.project_name)
+        if not backend_dir.is_dir():
+            # in case of backends not managed by dl-plus
+            backend_dir = None
     else:
-        package_name = backend_string
+        import_name = backend_string
         backend_dir = get_backend_dir(backend_string)
         if not backend_dir.is_dir():
             backend_dir = None
-    return backend_dir, _normalize(package_name)
+    return backend_dir, _normalize(import_name)
 
 
 def _init_backend(backend_string: str) -> Path | None:
@@ -102,7 +153,7 @@ def _init_backend(backend_string: str) -> Path | None:
 
 
 def _autodetect_backend() -> Path | None:
-    candidates = [backend.import_name for backend in KnownBackend]
+    candidates = tuple(get_known_backends())
     for candidate in candidates:
         try:
             return _init_backend(candidate)

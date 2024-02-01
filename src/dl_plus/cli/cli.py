@@ -5,7 +5,7 @@ from textwrap import dedent
 from typing import Union
 
 from dl_plus import core, ytdl
-from dl_plus.backend import KnownBackend, init_backend
+from dl_plus.backend import get_known_backends, init_backend
 from dl_plus.config import Config
 from dl_plus.const import DL_PLUS_VERSION
 from dl_plus.exceptions import DLPlusException
@@ -29,7 +29,10 @@ def _detect_compat_mode(program_name: str) -> bool:
         name = path.stem
     else:
         name = path.name
-    return name in (backend.executable_name for backend in KnownBackend)
+    return name in (
+        backend.executable_name for backend
+        in get_known_backends().values()
+    )
 
 
 class _MainArgParser(argparse.ArgumentParser):
