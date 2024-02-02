@@ -2,6 +2,7 @@ from dl_plus.cli import args as cli_args
 
 from .backend import BackendCommandGroup
 from .base import CommandGroup
+from .config import ConfigCommandGroup
 from .extractor import ExtractorCommandGroup
 
 
@@ -15,4 +16,5 @@ class RootCommandGroup(CommandGroup):
     commands = (
         BackendCommandGroup,
         ExtractorCommandGroup,
+        ConfigCommandGroup,
     )

@@ -68,13 +68,20 @@ def parse_backends_config(content: str) -> dict[str, Backend]:
 _known_backends: dict[str, Backend] | None = None
 
 
-def get_known_backends():
+def get_backends_config_path() -> Optional[Path]:
+    path = get_config_home() / 'backends.ini'
+    if not path.is_file():
+        return None
+    return path
+
+
+def get_known_backends() -> dict[str, Backend]:
     global _known_backends
     if _known_backends is not None:
         return _known_backends
     _known_backends = parse_backends_config(DEFAULT_BACKENDS_CONFIG)
-    config_path = get_config_home() / 'backends.ini'
-    if config_path.is_file():
+    config_path = get_backends_config_path()
+    if config_path:
         with open(config_path) as fobj:
             _known_backends.update(parse_backends_config(fobj.read()))
     return _known_backends

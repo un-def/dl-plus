@@ -27,7 +27,11 @@ class CommandNamespace(argparse.Namespace):
         return self.__dict__[_COMMAND_DEST]
 
     def _set_command(self, value):
-        self.__dict__[_COMMAND_DEST].append(value)
+        if isinstance(value, list):
+            self.__dict__[_COMMAND_DEST].extend(value)
+        else:
+            assert isinstance(value, str), repr(str)
+            self.__dict__[_COMMAND_DEST].append(value)
 
     command = property(_get_command, _set_command)
 
@@ -38,6 +42,11 @@ class CommandArgParser(argparse.ArgumentParser):
         kwargs.setdefault(
             'formatter_class', argparse.RawDescriptionHelpFormatter)
         super().__init__(*args, **kwargs)
+
+    def parse_known_args(self, args=None, namespace=None):
+        if namespace is None:
+            namespace = CommandNamespace()
+        return super().parse_known_args(args, namespace)
 
     def add_command_arguments(self, command: Type[Command]):
         for parent in command.get_parents():
@@ -67,7 +76,6 @@ class CommandArgParser(argparse.ArgumentParser):
     def add_command_group_subparsers(self, *args, **kwargs):
         kwargs.setdefault('dest', _COMMAND_DEST)
         kwargs.setdefault('metavar', 'COMMAND')
-        kwargs.setdefault('parser_class', self.__class__)
         kwargs.setdefault('required', True)
         subparsers = self.add_subparsers(*args, **kwargs)
         return subparsers
@@ -78,6 +86,6 @@ def run_command(prog: str, cmd_arg: str, args: List[str]) -> None:
     parser.add_argument(
         cmd_arg, action='store_true', required=True, help=argparse.SUPPRESS)
     parser.add_command_group(RootCommandGroup)
-    parsed_args = parser.parse_args(args, namespace=CommandNamespace())
+    parsed_args = parser.parse_args(args)
     command_cls = RootCommandGroup.get_command(parsed_args.command)
     command_cls(parsed_args).run()

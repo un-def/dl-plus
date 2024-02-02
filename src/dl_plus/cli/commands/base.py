@@ -4,6 +4,7 @@ import os
 import shutil
 import zipfile
 from argparse import Namespace
+from functools import cached_property
 from pathlib import Path
 from textwrap import dedent
 from typing import (
@@ -11,7 +12,7 @@ from typing import (
     Union,
 )
 
-from dl_plus.config import Config
+from dl_plus.config import Config, ConfigError, get_config_path
 from dl_plus.exceptions import DLPlusException
 from dl_plus.pypi import PyPIClient, Wheel, load_metadata, save_metadata
 
@@ -70,8 +71,6 @@ class _CommandBase:
 class Command(_CommandBase):
     args: Namespace
 
-    _config: Optional[Config] = None
-
     def __init__(self, args: Namespace) -> None:
         self.args = args
         self.init()
@@ -82,18 +81,23 @@ class Command(_CommandBase):
     def run(self) -> None:
         raise NotImplementedError
 
-    @property
+    @cached_property
+    def config_path(self) -> Optional[Path]:
+        try:
+            return get_config_path(getattr(self.args, 'dlp_config', None))
+        except ConfigError:
+            return None
+
+    @cached_property
     def config(self) -> Config:
-        if self._config is None:
-            config = Config()
-            config_file: Union[str, bool, None]
-            if getattr(self.args, 'no_dlp_config', False):
-                config_file = False
-            else:
-                config_file = getattr(self.args, 'dlp_config', None)
-            config.load(config_file)
-            self._config = config
-        return self._config
+        config = Config()
+        config_file: Union[Path, bool, None]
+        if getattr(self.args, 'no_dlp_config', False):
+            config_file = False
+        else:
+            config_file = self.config_path
+        config.load(config_file)
+        return config
 
     def die(self, message: str) -> None:
         raise CommandError(message)
