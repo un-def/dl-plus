@@ -31,12 +31,16 @@ class ParseError(PyPIClientError):
 class DownloadError(RequestError):
 
     def __init__(
-        self, project_name: str, version: Optional[str], error: str,
+        self, error: str,
+        project_name: Optional[str] = None, version: Optional[str] = None,
     ) -> None:
-        if version:
-            message = f'{project_name} {version}: {error}'
+        if project_name:
+            if version:
+                message = f'{project_name} {version}: {error}'
+            else:
+                message = f'{project_name}: {error}'
         else:
-            message = f'{project_name}: {error}'
+            message = error
         super().__init__(message)
 
 
@@ -105,11 +109,11 @@ class PyPIClient:
                 error = 'not found'
             else:
                 error = 'unexpected error'
-            raise DownloadError(project_name, version, error) from exc
+            raise DownloadError(error, project_name, version) from exc
         try:
             release = next(filter(self._is_wheel_release, metadata.urls))
         except StopIteration:
-            raise DownloadError(project_name, version, 'no wheel distribution')
+            raise DownloadError('no wheel distribution', project_name, version)
         return Wheel(
             name=metadata.name,
             version=metadata.version,
