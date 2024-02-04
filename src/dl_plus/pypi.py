@@ -1,5 +1,9 @@
 import hashlib
 import json
+import os
+import shutil
+import tempfile
+import zipfile
 from collections import namedtuple
 from io import BytesIO
 from pathlib import Path
@@ -138,3 +142,16 @@ class PyPIClient:
                     f'got {hexdigest}'
                 )
         return buffer
+
+    def install_wheel(self, wheel: Wheel, output_dir: Path) -> None:
+        with tempfile.TemporaryDirectory() as _tmp_dir:
+            tmp_dir = Path(_tmp_dir) / output_dir.name
+            with self.download_file(wheel.url, wheel.sha256) as fobj:
+                with zipfile.ZipFile(fobj) as zfobj:
+                    zfobj.extractall(tmp_dir)
+            if output_dir.exists():
+                shutil.rmtree(output_dir)
+            else:
+                os.makedirs(output_dir.parent, exist_ok=True)
+            shutil.move(tmp_dir, output_dir.parent)
+        save_metadata(output_dir, wheel.metadata)

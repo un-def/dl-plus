@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import os
-import shutil
-import zipfile
 from argparse import Namespace
 from functools import cached_property
 from pathlib import Path
@@ -14,7 +11,7 @@ from typing import (
 
 from dl_plus.config import Config, ConfigError, get_config_path
 from dl_plus.exceptions import DLPlusException
-from dl_plus.pypi import PyPIClient, Wheel, load_metadata, save_metadata
+from dl_plus.pypi import PyPIClient, Wheel, load_metadata
 
 
 if TYPE_CHECKING:
@@ -157,15 +154,6 @@ class BaseInstallUpdateCommand(Command):
             return None
         return load_metadata(output_dir)
 
-    def install_wheel(self, wheel: Wheel, output_dir: Path) -> None:
-        if output_dir.exists():
-            shutil.rmtree(output_dir)
-        os.makedirs(output_dir)
-        with self.client.download_file(wheel.url, wheel.sha256) as fobj:
-            with zipfile.ZipFile(fobj) as zfobj:
-                zfobj.extractall(output_dir)
-        save_metadata(output_dir, wheel.metadata)
-
 
 class BaseInstallCommand(BaseInstallUpdateCommand):
 
@@ -219,7 +207,7 @@ class BaseInstallCommand(BaseInstallUpdateCommand):
 
     def install(self, wheel: Wheel, output_dir: Path) -> None:
         self.print('Installing')
-        self.install_wheel(wheel, output_dir)
+        self.client.install_wheel(wheel, output_dir)
         self.print('Installed')
 
 
@@ -257,5 +245,5 @@ class BaseUpdateCommand(BaseInstallUpdateCommand):
 
     def update(self, wheel: Wheel, output_dir: Path) -> None:
         self.print('Updating')
-        self.install_wheel(wheel, output_dir)
+        self.client.install_wheel(wheel, output_dir)
         self.print('Updated')
