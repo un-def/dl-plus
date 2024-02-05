@@ -18,6 +18,9 @@ from urllib.request import urlopen
 from dl_plus.exceptions import DLPlusException
 
 
+_HTTP_TIMEOUT = 30
+
+
 Wheel = namedtuple('Wheel', 'name,version,metadata,filename,url,sha256')
 
 
@@ -98,7 +101,7 @@ class PyPIClient:
     ) -> Metadata:
         url = self.build_json_url(project_name, version)
         try:
-            with urlopen(url) as response:
+            with urlopen(url, timeout=_HTTP_TIMEOUT) as response:
                 return Metadata(json.load(response))
         except (OSError, ValueError) as exc:
             raise RequestError from exc
@@ -177,7 +180,7 @@ class BuiltinWheelInstaller(WheelInstaller):
 
     def _download(self, url: str, sha256: str) -> BytesIO:
         try:
-            with urlopen(url) as response:
+            with urlopen(url, timeout=_HTTP_TIMEOUT) as response:
                 buffer = BytesIO(response.read())
         except OSError as exc:
             raise DownloadError(f'{url}: {exc}') from exc
