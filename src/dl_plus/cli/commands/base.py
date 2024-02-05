@@ -11,7 +11,7 @@ from typing import (
 
 from dl_plus.config import Config, ConfigError, get_config_path
 from dl_plus.exceptions import DLPlusException
-from dl_plus.pypi import PyPIClient, Wheel, load_metadata
+from dl_plus.pypi import PyPIClient, Wheel, WheelInstaller, load_metadata
 
 
 if TYPE_CHECKING:
@@ -138,6 +138,7 @@ class CommandError(DLPlusException):
 
 class BaseInstallUpdateCommand(Command):
     client: PyPIClient
+    wheel_installer: WheelInstaller
 
     def get_output_dir(self, wheel: Wheel) -> Path:
         raise NotImplementedError
@@ -148,6 +149,7 @@ class BaseInstallUpdateCommand(Command):
 
     def init(self) -> None:
         self.client = PyPIClient()
+        self.wheel_installer = WheelInstaller()
 
     def load_installed_metadata(self, output_dir: Path) -> Optional[Metadata]:
         if not output_dir.exists():
@@ -207,7 +209,8 @@ class BaseInstallCommand(BaseInstallUpdateCommand):
 
     def install(self, wheel: Wheel, output_dir: Path) -> None:
         self.print('Installing')
-        self.client.install_wheel(wheel, output_dir)
+        self.print(f'Using {self.wheel_installer.identifier} installer')
+        self.wheel_installer.install(wheel, output_dir)
         self.print('Installed')
 
 
@@ -245,5 +248,6 @@ class BaseUpdateCommand(BaseInstallUpdateCommand):
 
     def update(self, wheel: Wheel, output_dir: Path) -> None:
         self.print('Updating')
-        self.client.install_wheel(wheel, output_dir)
+        self.print(f'Using {self.wheel_installer.identifier} installer')
+        self.wheel_installer.install(wheel, output_dir)
         self.print('Updated')

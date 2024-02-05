@@ -1,13 +1,17 @@
+from __future__ import annotations
+
 import hashlib
 import json
 import os
 import shutil
+import subprocess
+import sys
 import tempfile
 import zipfile
 from collections import namedtuple
 from io import BytesIO
 from pathlib import Path
-from typing import Dict, Optional
+from typing import ClassVar, Dict, Optional
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
@@ -127,31 +131,72 @@ class PyPIClient:
             sha256=release['digests']['sha256'],
         )
 
-    def download_file(self, url: str, sha256: Optional[str] = None) -> BytesIO:
-        try:
-            with urlopen(url) as response:
-                buffer = BytesIO(response.read())
-        except OSError as exc:
-            raise DownloadError(f'{url}: {exc}') from exc
-        if sha256:
-            digest = hashlib.sha256(buffer.getvalue())
-            hexdigest = digest.hexdigest()
-            if hexdigest != sha256:
-                raise DownloadError(
-                    f'{url}: sha256 mismatch: expected {sha256}, '
-                    f'got {hexdigest}'
-                )
-        return buffer
 
-    def install_wheel(self, wheel: Wheel, output_dir: Path) -> None:
+def _is_pip_available():
+    exit_status = subprocess.call(
+        [sys.executable, '-m', 'pip', '--version'],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    )
+    return exit_status == 0
+
+
+class WheelInstaller:
+    identifier: ClassVar[str]
+
+    def __new__(cls) -> 'WheelInstaller':
+        if cls is WheelInstaller:
+            if _is_pip_available():
+                return PipWheelInstaller()
+            else:
+                return BuiltinWheelInstaller()
+        return super().__new__(cls)
+
+    def install(self, wheel: Wheel, output_dir: Path) -> None:
         with tempfile.TemporaryDirectory() as _tmp_dir:
             tmp_dir = Path(_tmp_dir) / output_dir.name
-            with self.download_file(wheel.url, wheel.sha256) as fobj:
-                with zipfile.ZipFile(fobj) as zfobj:
-                    zfobj.extractall(tmp_dir)
+            self._install(wheel, tmp_dir)
             if output_dir.exists():
                 shutil.rmtree(output_dir)
             else:
                 os.makedirs(output_dir.parent, exist_ok=True)
             shutil.move(tmp_dir, output_dir.parent)
         save_metadata(output_dir, wheel.metadata)
+
+    def _install(self, wheel: Wheel, tmp_dir: Path) -> None:
+        raise NotImplementedError
+
+
+class BuiltinWheelInstaller(WheelInstaller):
+    # builtin installer cannot install wheel dependencies
+    identifier = 'builtin'
+
+    def _install(self, wheel: Wheel, tmp_dir: Path) -> None:
+        with self._download(wheel.url, wheel.sha256) as fobj:
+            with zipfile.ZipFile(fobj) as zfobj:
+                zfobj.extractall(tmp_dir)
+
+    def _download(self, url: str, sha256: str) -> BytesIO:
+        try:
+            with urlopen(url) as response:
+                buffer = BytesIO(response.read())
+        except OSError as exc:
+            raise DownloadError(f'{url}: {exc}') from exc
+        digest = hashlib.sha256(buffer.getvalue())
+        hexdigest = digest.hexdigest()
+        if hexdigest != sha256:
+            raise DownloadError(
+                f'{url}: sha256 mismatch: expected {sha256}, got {hexdigest}')
+        return buffer
+
+
+class PipWheelInstaller(WheelInstaller):
+    # pip installer installs wheel dependencies
+    identifier = 'pip'
+
+    def _install(self, wheel: Wheel, tmp_dir: Path) -> None:
+        subprocess.check_call([
+            sys.executable, '-m', 'pip', 'install', '--quiet',
+            '--target', str(tmp_dir),
+            '--only-binary', ':all:',
+            f'{wheel.url}#sha256={wheel.sha256}',
+        ])
