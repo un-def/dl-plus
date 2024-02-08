@@ -198,7 +198,8 @@ class PipWheelInstaller(WheelInstaller):
 
     def _install(self, wheel: Wheel, tmp_dir: Path) -> None:
         subprocess.check_call([
-            sys.executable, '-m', 'pip', 'install', '--quiet',
+            sys.executable, '-m', 'pip', 'install',
+            '--quiet', '--disable-pip-version-check',
             '--target', str(tmp_dir),
             '--only-binary', ':all:',
             f'{wheel.url}#sha256={wheel.sha256}',
