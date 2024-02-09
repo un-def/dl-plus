@@ -37,6 +37,17 @@ class Extractor(InfoExtractor):
                 cls._VALID_URL_RE = re.compile(valid_url)
             return cls._VALID_URL_RE.match(url)
 
+    if (
+            ytdl.get_ytdl_module_name() == 'yt_dlp'
+            and ytdl.get_ytdl_module_version() >= '2023.01.02'
+    ):
+
+        # suppress some warnings
+        def _sort_formats(self, formats, field_preference=None):
+            if not formats or not field_preference:
+                return
+            super()._sort_formats(formats, field_preference)
+
     # dl-plus extra attributes/methods
 
     DLP_BASE_URL: Optional[str] = None

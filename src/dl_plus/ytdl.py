@@ -69,6 +69,16 @@ def get_ytdl_module():
     return _ytdl_module
 
 
+def get_ytdl_module_name():
+    _check_initialized()
+    global _ytdl_module_name
+    return _ytdl_module_name
+
+
+def get_ytdl_module_version():
+    return import_from('version', '__version__')
+
+
 def get_help():
     _check_initialized()
     with StringIO() as buffer:
