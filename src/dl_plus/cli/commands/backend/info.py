@@ -2,8 +2,10 @@ from dl_plus.backend import init_backend
 from dl_plus.cli.args import Arg
 from dl_plus.cli.commands.base import Command
 
+from .base import BackendCommandMixin
 
-class BackendInfoCommand(Command):
+
+class BackendInfoCommand(BackendCommandMixin, Command):
 
     short_description = 'Show backend information'
 

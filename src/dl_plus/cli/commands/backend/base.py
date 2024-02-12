@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 
 from dl_plus import backend
@@ -14,7 +15,19 @@ else:
     _base = object
 
 
-class BackendInstallUpdateCommandMixin(_base):
+PROJECT_NAME_REGEX = re.compile(r'^[A-Za-z0-9_-]+$')
+
+
+class BackendCommandMixin(_base):
+
+    def init(self):
+        super().init()
+        project_name = self.args.name
+        if not PROJECT_NAME_REGEX.fullmatch(project_name):
+            self.die(f'Invalid backend name: {project_name}')
+
+
+class BackendInstallUpdateCommandMixin(BackendCommandMixin):
 
     def get_output_dir(self, wheel: Wheel) -> Path:
         return backend.get_backend_dir(wheel.name)
