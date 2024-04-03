@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.8.0
+
+### Features
+
+  * **(Config)** Backend configuration file. A new config file `$DL_PLUS_CONFIG_HOME/backends.ini` can be used to extend/override the predefined list of backends.
+  * **(CLI)** Two new commands was added — `config show main` and `config show backends` — to display `config.ini` and `backends.ini`, respectively.
+  * A new backend/extractor installer based on `pip`. Unlike previously used `builtin` installer, `pip` installer is able to install dependencies. The new installer is used if `pip` is available, the legacy `builtin` installer is used otherwise.
+
+### Improvements
+
+  * **(Extractor API)** `yt-dlp`'s `_sort_format` warnings are supressed when possible.
+  * **(CLI)** Backend name validation in backend–related commands.
+
 ## 0.7.0
 
 ### Breaking Changes
