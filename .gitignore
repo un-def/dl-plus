@@ -2,6 +2,7 @@
 !.gitignore
 !.editorconfig
 !.flake8
+!.github/
 
 *.py[co]
 
