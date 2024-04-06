@@ -1,5 +1,11 @@
 # Changelog
 
+## UNRELEASED
+
+### Fixes
+
+  * **(CLI)** Don't try to validate a backend name if not passed. Fixes `TypeError` on `backend update` command.
+
 ## 0.8.0
 
 ### Features

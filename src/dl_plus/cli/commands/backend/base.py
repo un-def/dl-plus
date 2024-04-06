@@ -23,7 +23,7 @@ class BackendCommandMixin(_base):
     def init(self):
         super().init()
         project_name = self.args.name
-        if not PROJECT_NAME_REGEX.fullmatch(project_name):
+        if project_name and not PROJECT_NAME_REGEX.fullmatch(project_name):
             self.die(f'Invalid backend name: {project_name}')
 
 
