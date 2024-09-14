@@ -2,6 +2,7 @@ from dl_plus.cli.commands.base import CommandGroup
 
 from .info import BackendInfoCommand
 from .install import BackendInstallCommand
+from .uninstall import BackendUninstallCommand
 from .update import BackendUpdateCommand
 
 
@@ -12,5 +13,6 @@ class BackendCommandGroup(CommandGroup):
     commands = (
         BackendInfoCommand,
         BackendInstallCommand,
+        BackendUninstallCommand,
         BackendUpdateCommand,
     )

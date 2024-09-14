@@ -27,7 +27,11 @@ class BackendCommandMixin(_base):
             self.die(f'Invalid backend name: {project_name}')
 
 
-class BackendInstallUpdateCommandMixin(BackendCommandMixin):
+class BackendInstallUninstallUpdateCommandMixin(BackendCommandMixin):
 
-    def get_output_dir(self, wheel: Wheel) -> Path:
-        return backend.get_backend_dir(wheel.name)
+    def get_package_dir(self, wheel: Wheel | None = None) -> Path:
+        if wheel is None:
+            name = self.args.name
+        else:
+            name = wheel.name
+        return backend.get_backend_dir(name)

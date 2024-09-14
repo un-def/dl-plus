@@ -4,11 +4,11 @@ from dl_plus.backend import init_backend
 from dl_plus.cli.args import Arg
 from dl_plus.cli.commands.base import BaseUpdateCommand
 
-from .base import BackendInstallUpdateCommandMixin
+from .base import BackendInstallUninstallUpdateCommandMixin
 
 
 class BackendUpdateCommand(
-    BackendInstallUpdateCommandMixin, BaseUpdateCommand,
+    BackendInstallUninstallUpdateCommandMixin, BaseUpdateCommand,
 ):
 
     short_description = 'Update backend'

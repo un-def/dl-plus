@@ -5,11 +5,11 @@ from typing import Optional, Tuple
 from dl_plus.cli.args import Arg
 from dl_plus.cli.commands.base import BaseInstallCommand
 
-from .base import ExtractorInstallUpdateCommandMixin
+from .base import ExtractorInstallUninstallUpdateCommandMixin
 
 
 class ExtractorInstallCommand(
-    ExtractorInstallUpdateCommandMixin, BaseInstallCommand,
+    ExtractorInstallUninstallUpdateCommandMixin, BaseInstallCommand,
 ):
 
     short_description = 'Install extractor plugin'

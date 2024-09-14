@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import shutil
+import sys
 from argparse import Namespace
 from functools import cached_property
 from pathlib import Path
 from textwrap import dedent
 from typing import (
-    TYPE_CHECKING, ClassVar, Dict, List, Optional, Sequence, Tuple, Type,
-    Union,
+    TYPE_CHECKING, ClassVar, Dict, List, NoReturn, Optional, Sequence, Tuple,
+    Type, Union,
 )
 
 from dl_plus.config import Config, ConfigError, get_config_path
@@ -96,10 +98,29 @@ class Command(_CommandBase):
         config.load(config_file)
         return config
 
-    def die(self, message: str) -> None:
+    def die(self, message: str) -> NoReturn:
         raise CommandError(message)
 
     print = print
+
+    def confirm(self, message: str) -> bool:
+        try:
+            assume_yes = self.args.assume_yes
+        except AttributeError:
+            assume_yes = None
+        if assume_yes:
+            return True
+        prompt = f'{message} [Y/n]'
+        if sys.stdin.isatty():
+            return input(f'{prompt} ').lower() in ['y', 'yes']
+        self.print(prompt)
+        if assume_yes is None:
+            self.print('Non-interactive mode, assuming no')
+            return False
+        self.die(
+            'Non-interactive mode, use `--assume-yes` for automatic '
+            'confirmation'
+        )
 
 
 class CommandGroup(_CommandBase):
@@ -140,7 +161,7 @@ class BaseInstallUpdateCommand(Command):
     client: PyPIClient
     wheel_installer: WheelInstaller
 
-    def get_output_dir(self, wheel: Wheel) -> Path:
+    def get_package_dir(self, wheel: Wheel) -> Path:
         raise NotImplementedError
 
     def get_short_name(self) -> str:
@@ -151,10 +172,10 @@ class BaseInstallUpdateCommand(Command):
         self.client = PyPIClient()
         self.wheel_installer = WheelInstaller()
 
-    def load_installed_metadata(self, output_dir: Path) -> Optional[Metadata]:
-        if not output_dir.exists():
+    def load_installed_metadata(self, package_dir: Path) -> Optional[Metadata]:
+        if not package_dir.exists():
             return None
-        return load_metadata(output_dir)
+        return load_metadata(package_dir)
 
 
 class BaseInstallCommand(BaseInstallUpdateCommand):
@@ -170,10 +191,10 @@ class BaseInstallCommand(BaseInstallUpdateCommand):
         wheel = self.client.fetch_wheel_info(name, version)
         self.print(f'Found remote version: {wheel.name} {wheel.version}')
 
-        output_dir = self.get_output_dir(wheel)
-        installed_metadata = self.load_installed_metadata(output_dir)
+        package_dir = self.get_package_dir(wheel)
+        installed_metadata = self.load_installed_metadata(package_dir)
         if not installed_metadata:
-            self.install(wheel, output_dir)
+            self.install(wheel, package_dir)
             return
 
         self.print(
@@ -205,12 +226,12 @@ class BaseInstallCommand(BaseInstallUpdateCommand):
                 return
             self.print('Forcing installation')
 
-        self.install(wheel, output_dir)
+        self.install(wheel, package_dir)
 
-    def install(self, wheel: Wheel, output_dir: Path) -> None:
+    def install(self, wheel: Wheel, package_dir: Path) -> None:
         self.print('Installing')
         self.print(f'Using {self.wheel_installer.identifier} installer')
-        self.wheel_installer.install(wheel, output_dir)
+        self.wheel_installer.install(wheel, package_dir)
         self.print('Installed')
 
 
@@ -224,17 +245,16 @@ class BaseUpdateCommand(BaseInstallUpdateCommand):
         wheel = self.client.fetch_wheel_info(name)
         self.print(f'Found remote version: {wheel.name} {wheel.version}')
 
-        output_dir = self.get_output_dir(wheel)
-        installed_metadata = self.load_installed_metadata(output_dir)
+        package_dir = self.get_package_dir(wheel)
+        installed_metadata = self.load_installed_metadata(package_dir)
         if not installed_metadata:
             command_prefix = ' '.join(
                 self.get_command_path(include_command=False))
             short_name = self.get_short_name()
-            self.print(
+            self.die(
                 f'{short_name} is not installed, use '
                 f'`{command_prefix} install {short_name} [VERSION]` to install'
             )
-            return
 
         self.print(
             f'Found installed version: {installed_metadata.name} '
@@ -244,10 +264,34 @@ class BaseUpdateCommand(BaseInstallUpdateCommand):
             self.print('The latest version is already installed')
             return
 
-        self.update(wheel, output_dir)
+        self.update(wheel, package_dir)
 
-    def update(self, wheel: Wheel, output_dir: Path) -> None:
+    def update(self, wheel: Wheel, package_dir: Path) -> None:
         self.print('Updating')
         self.print(f'Using {self.wheel_installer.identifier} installer')
-        self.wheel_installer.install(wheel, output_dir)
+        self.wheel_installer.install(wheel, package_dir)
         self.print('Updated')
+
+
+class BaseUninstallCommand(Command):
+
+    def get_package_dir(self) -> Path:
+        raise NotImplementedError
+
+    def get_short_name(self) -> str:
+        """Return short name used for logging, command examples, etc."""
+        raise NotImplementedError
+
+    def run(self):
+        package_dir = self.get_package_dir()
+        short_name = self.get_short_name()
+        if not package_dir.exists():
+            self.die(f'{short_name} is not installed')
+        if self.confirm(f'Uninstall {short_name}?'):
+            self.uninstall(package_dir)
+        else:
+            self.print('Aborted')
+
+    def uninstall(self, package_dir: Path) -> None:
+        shutil.rmtree(package_dir)
+        self.print('Unistalled')

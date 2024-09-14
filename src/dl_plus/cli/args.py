@@ -69,3 +69,9 @@ dlp_config = ExclusiveArgGroup(
     ),
     title='config options',
 )
+
+
+assume_yes_arg = Arg(
+    '-y', '--assume-yes', action='store_true',
+    help='Automatic yes to prompts.'
+)

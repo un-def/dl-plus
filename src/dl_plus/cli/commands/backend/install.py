@@ -5,11 +5,11 @@ from typing import Optional, Tuple
 from dl_plus.cli.args import Arg
 from dl_plus.cli.commands.base import BaseInstallCommand
 
-from .base import BackendInstallUpdateCommandMixin
+from .base import BackendInstallUninstallUpdateCommandMixin
 
 
 class BackendInstallCommand(
-    BackendInstallUpdateCommandMixin, BaseInstallCommand,
+    BackendInstallUninstallUpdateCommandMixin, BaseInstallCommand,
 ):
 
     short_description = 'Install backend'

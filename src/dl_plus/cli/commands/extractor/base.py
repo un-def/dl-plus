@@ -19,7 +19,7 @@ PLUGIN_NAME_REGEX = re.compile(
     r'^(?:dl-plus-extractor-)?(?P<ns>[a-z0-9]+)[/-](?P<plugin>[a-z0-9]+)$')
 
 
-class ExtractorInstallUpdateCommandMixin(_base):
+class ExtractorInstallUninstallUpdateCommandMixin(_base):
     ns: str
     plugin: str
     project_name: str
@@ -33,8 +33,8 @@ class ExtractorInstallUpdateCommandMixin(_base):
         self.ns, self.plugin = match.groups()
         self.project_name = f'dl-plus-extractor-{self.ns}-{self.plugin}'
 
-    def get_output_dir(self, wheel: Wheel) -> Path:
+    def get_package_dir(self, wheel: Wheel | None = None) -> Path:
         return get_extractor_plugin_dir(self.ns, self.plugin)
 
     def get_short_name(self) -> str:
-        return self.args.name
+        return f'{self.ns}/{self.plugin}'

@@ -3,11 +3,11 @@ from __future__ import annotations
 from dl_plus.cli.args import Arg
 from dl_plus.cli.commands.base import BaseUpdateCommand
 
-from .base import ExtractorInstallUpdateCommandMixin
+from .base import ExtractorInstallUninstallUpdateCommandMixin
 
 
 class ExtractorUpdateCommand(
-    ExtractorInstallUpdateCommandMixin, BaseUpdateCommand,
+    ExtractorInstallUninstallUpdateCommandMixin, BaseUpdateCommand,
 ):
 
     short_description = 'Update extractor plugin'
