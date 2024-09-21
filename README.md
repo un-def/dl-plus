@@ -56,25 +56,25 @@ A [youtube-dl][youtube-dl-website] extension with pluggable extractors
     * using `dl-plus` itself:
 
       ```
-      dl-plus --cmd extractor install un1def/wasdtv
+      dl-plus --cmd extractor install un1def/goodgame
       ```
 
       PyPI package names are supported too:
 
       ```
-      dl-plus --cmd extractor install dl-plus-extractor-un1def-wasdtv
+      dl-plus --cmd extractor install dl-plus-extractor-un1def-goodgame
       ```
 
     * using [pipx][pipx-website]:
 
       ```
-      pipx inject dl-plus dl-plus-extractor-un1def-wasdtv
+      pipx inject dl-plus dl-plus-extractor-un1def-goodgame
       ```
 
     * using pip:
 
       ```
-      pip install dl-plus-extractor-un1def-wasdtv
+      pip install dl-plus-extractor-un1def-goodgame
       ```
 
 4.  (optional) Create `dl-plus` → `youtube-dl` symlink (for apps relying on `youtube-dl` executable in `PATH`, e.g., [mpv][mpv-website]):

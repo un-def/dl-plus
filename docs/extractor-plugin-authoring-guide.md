@@ -1,6 +1,6 @@
 # Extractor Plugin Authoring Guide
 
-**NOTE**: you can use the [un1def/wasdtv][un1def-wasdtv-extractor-repo] plugin repository as an example.
+**NOTE**: you can use the [un1def/goodgame][un1def-goodgame-extractor-repo] plugin repository as an example.
 
 1.  Choose a namespace. Namespaces are used to avoid name conflicts of different plugins created by different authors. It's recommended to use your name, username, or organization name as a namespace. Make sure that the namespace is not already taken (at least search for `dl-plus-extractor-<namespace>` on [PyPI][pypi-website]).
 
@@ -122,6 +122,6 @@
     The same name should be used for the project's public repository.
 
 
-[un1def-wasdtv-extractor-repo]: https://github.com/un-def/dl-plus-extractor-un1def-wasdtv
+[un1def-goodgame-extractor-repo]: https://github.com/un-def/dl-plus-extractor-un1def-goodgame
 [pypi-website]: https://pypi.org/
 [youtube-dl-extractor-guide]: https://github.com/ytdl-org/youtube-dl#adding-support-for-a-new-site
