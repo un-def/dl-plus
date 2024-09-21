@@ -2,6 +2,10 @@
 
 ## UNRELEASED
 
+### Features
+
+  * **(CLI)** New management commands were added — `backend list`, `backend uninstall NAME`, `extractor list`, `extractor uninstall NAME`.
+
 ### Fixes
 
   * **(CLI)** Don't try to validate a backend name if not passed. Fixes `TypeError` on `backend update` command.
@@ -11,7 +15,7 @@
 ### Features
 
   * **(Config)** Backend configuration file. A new config file `$DL_PLUS_CONFIG_HOME/backends.ini` can be used to extend/override the predefined list of backends.
-  * **(CLI)** Two new commands was added — `config show main` and `config show backends` — to display `config.ini` and `backends.ini`, respectively.
+  * **(CLI)** Two new commands were added — `config show main` and `config show backends` — to display `config.ini` and `backends.ini`, respectively.
   * A new backend/extractor installer based on `pip`. Unlike previously used `builtin` installer, `pip` installer is able to install dependencies. The new installer is used if `pip` is available, the legacy `builtin` installer is used otherwise.
 
 ### Improvements
