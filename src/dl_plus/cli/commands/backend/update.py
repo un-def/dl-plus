@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from dl_plus.backend import init_backend
+from dl_plus.backend import get_backend_dir, init_backend
 from dl_plus.cli.args import Arg
 from dl_plus.cli.commands.base import BaseUpdateCommand
+from dl_plus.exceptions import DLPlusException
 
 from .base import BackendInstallUninstallUpdateCommandMixin
 
@@ -24,14 +25,25 @@ class BackendUpdateCommand(
 
     def init(self):
         super().init()
-        backend_info = init_backend(self.args.name or self.config.backend)
+        backend = self.args.name or self.config.backend
+        self.project_name = backend
+        backend_dir = get_backend_dir(backend)
+        if backend_dir.exists():
+            # installed, managed
+            return
+        try:
+            backend_info = init_backend(backend)
+        except DLPlusException:
+            # not installed, report error later
+            return
         if not backend_info.is_managed:
-            import_name = backend_info.import_name
+            # installed, not managed
             self.die(
-                f'{import_name} is not managed by dl-plus, '
-                f'use `backend install {import_name}` first to install it'
+                f'{backend} is not managed by dl-plus, '
+                f'use `backend install {backend}` first to install it'
             )
-        self.project_name = backend_info.metadata.name
+        # should not reach here
+        self.die('something went wrong')
 
     def get_project_name(self) -> str:
         return self.project_name
