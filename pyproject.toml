@@ -14,13 +14,13 @@ classifiers = [
     'Development Status :: 4 - Beta',
     'License :: OSI Approved :: MIT License',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
 ]
-requires-python = '>= 3.8'
+requires-python = '>= 3.9'
 dynamic = ['version']
 
 [project.urls]
@@ -51,7 +51,7 @@ skip_glob = ['.*']
 [tool.mypy]
 mypy_path = '${MYPY_CONFIG_FILE_DIR}/src'
 packages = 'dl_plus'
-python_version = '3.8'   # the lowest Python version we support
+python_version = '3.9'   # the lowest Python version we support
 namespace_packages = true
 disallow_any_unimported = true
 disallow_any_expr = true
