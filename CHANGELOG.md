@@ -1,10 +1,15 @@
 # Changelog
 
-## UNRELEASED
+## 0.9.0
+
+### Breaking Changes
+
+  * Dropped support for Python 3.8.
 
 ### Features
 
   * **(CLI)** New management commands were added — `backend list`, `backend uninstall NAME`, `extractor list`, `extractor uninstall NAME`.
+  * Added support for Python 3.13.
 
 ### Fixes
 
