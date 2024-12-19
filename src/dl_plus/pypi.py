@@ -8,10 +8,10 @@ import subprocess
 import sys
 import tempfile
 import zipfile
-from collections import namedtuple
+from collections.abc import Iterable
 from io import BytesIO
 from pathlib import Path
-from typing import ClassVar, Dict, Optional
+from typing import ClassVar, Dict, NamedTuple, Optional
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
@@ -21,7 +21,13 @@ from dl_plus.exceptions import DLPlusException
 _HTTP_TIMEOUT = 30
 
 
-Wheel = namedtuple('Wheel', 'name,version,metadata,filename,url,sha256')
+class Wheel(NamedTuple):
+    name: str
+    version: str
+    metadata: Metadata
+    filename: str
+    url: str
+    sha256: str
 
 
 class PyPIClientError(DLPlusException):
@@ -68,6 +74,10 @@ class Metadata(dict):
     @property
     def urls(self) -> Dict[str, Dict]:
         return self['urls']
+
+    @property
+    def extras(self) -> Optional[list[str]]:
+        return self['info']['provides_extra']
 
 
 def save_metadata(backend_dir: Path, metadata: Metadata) -> None:
@@ -154,10 +164,18 @@ class WheelInstaller:
                 return BuiltinWheelInstaller()
         return super().__new__(cls)
 
-    def install(self, wheel: Wheel, output_dir: Path) -> None:
+    def install(
+        self, wheel: Wheel, output_dir: Path,
+        extras: Optional[Iterable[str]] = None,
+    ) -> None:
+        _extras: tuple[str, ...]
+        if extras is None:
+            _extras = ()
+        else:
+            _extras = tuple(extras)
         with tempfile.TemporaryDirectory() as _tmp_dir:
             tmp_dir = Path(_tmp_dir) / output_dir.name
-            self._install(wheel, tmp_dir)
+            self._install(wheel, tmp_dir, _extras)
             if output_dir.exists():
                 shutil.rmtree(output_dir)
             else:
@@ -173,7 +191,9 @@ class BuiltinWheelInstaller(WheelInstaller):
     # builtin installer cannot install wheel dependencies
     identifier = 'builtin'
 
-    def _install(self, wheel: Wheel, tmp_dir: Path) -> None:
+    def _install(
+        self, wheel: Wheel, tmp_dir: Path, extras: tuple[str, ...],
+    ) -> None:
         with self._download(wheel.url, wheel.sha256) as fobj:
             with zipfile.ZipFile(fobj) as zfobj:
                 zfobj.extractall(tmp_dir)
@@ -196,11 +216,17 @@ class PipWheelInstaller(WheelInstaller):
     # pip installer installs wheel dependencies
     identifier = 'pip'
 
-    def _install(self, wheel: Wheel, tmp_dir: Path) -> None:
+    def _install(
+        self, wheel: Wheel, tmp_dir: Path, extras: tuple[str, ...],
+    ) -> None:
+        if extras:
+            _extras = f'[{",".join(extras)}]'
+        else:
+            _extras = ''
         subprocess.check_call([
             sys.executable, '-m', 'pip', 'install',
             '--quiet', '--disable-pip-version-check',
             '--target', str(tmp_dir),
             '--only-binary', ':all:',
-            f'{wheel.url}#sha256={wheel.sha256}',
+            f'{wheel.name}{_extras} @ {wheel.url}#sha256={wheel.sha256}',
         ])

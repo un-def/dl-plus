@@ -3,6 +3,7 @@ from __future__ import annotations
 import shutil
 import sys
 from argparse import Namespace
+from collections.abc import Iterable
 from functools import cached_property
 from pathlib import Path
 from textwrap import dedent
@@ -168,6 +169,9 @@ class BaseInstallUpdateCommand(Command):
         """Return short name used for logging, command examples, etc."""
         raise NotImplementedError
 
+    def get_extras(self) -> Optional[Iterable[str]]:
+        return None
+
     def init(self) -> None:
         self.client = PyPIClient()
         self.wheel_installer = WheelInstaller()
@@ -231,7 +235,7 @@ class BaseInstallCommand(BaseInstallUpdateCommand):
     def install(self, wheel: Wheel, package_dir: Path) -> None:
         self.print('Installing')
         self.print(f'Using {self.wheel_installer.identifier} installer')
-        self.wheel_installer.install(wheel, package_dir)
+        self.wheel_installer.install(wheel, package_dir, self.get_extras())
         self.print('Installed')
 
 
@@ -269,7 +273,7 @@ class BaseUpdateCommand(BaseInstallUpdateCommand):
     def update(self, wheel: Wheel, package_dir: Path) -> None:
         self.print('Updating')
         self.print(f'Using {self.wheel_installer.identifier} installer')
-        self.wheel_installer.install(wheel, package_dir)
+        self.wheel_installer.install(wheel, package_dir, self.get_extras())
         self.print('Updated')
 
 

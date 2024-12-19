@@ -37,8 +37,14 @@ class ConfigShowBackendsCommand(Command):
     def _show_merged_config(self):
         config = _Config()
         for alias, backend in get_known_backends().items():
+            # revert [backend_alias] normalization
+            alias = alias.replace('_', '-')
             config.add_section(alias)
             for field, value in backend._asdict().items():
+                if field == 'extras':
+                    if not value:
+                        continue
+                    value = ' '.join(value)
                 config.set(alias, field.replace('_', '-'), value)
         with io.StringIO() as buf:
             config.write(buf)

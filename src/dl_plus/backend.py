@@ -28,6 +28,9 @@ class Backend(NamedTuple):
     # a name of the the executable script
     # *.dist-info/entry_points.txt->console_scripts).
     executable_name: str
+    # a list of extras to install
+    # *.dist-info/METADATA->Provides-Extra
+    extras: list[str]
 
 
 DEFAULT_BACKENDS_CONFIG = """
@@ -35,6 +38,7 @@ DEFAULT_BACKENDS_CONFIG = """
 project-name = yt-dlp
 import-name = yt_dlp
 executable-name = yt-dlp
+extras = default curl-cffi secretstorage
 
 [youtube-dl-nightly]
 project-name = youtube-dl-nightly
@@ -58,10 +62,13 @@ def parse_backends_config(content: str) -> dict[str, Backend]:
     config.read_string(content)
     backends = {}
     for alias in config.sections():
-        backends[_normalize(alias)] = Backend(**{
-            _normalize(field): value
-            for field, value in config[alias].items()
-        })
+        section = config[alias]
+        backends[_normalize(alias)] = Backend(
+            project_name=section['project-name'],
+            import_name=section['import-name'],
+            executable_name=section['executable-name'],
+            extras=section.get('extras', '').split(),
+        )
     return backends
 
 
@@ -85,6 +92,10 @@ def get_known_backends() -> dict[str, Backend]:
         with open(config_path) as fobj:
             _known_backends.update(parse_backends_config(fobj.read()))
     return _known_backends
+
+
+def get_known_backend(alias: str) -> Optional[Backend]:
+    return get_known_backends().get(_normalize(alias))
 
 
 class BackendInfo(NamedTuple):
@@ -137,7 +148,7 @@ def parse_backend_string(backend_string: str) -> tuple[Path | None, str]:
         if not backend_dir.is_dir():
             raise BackendError(
                 f'{backend_dir} does not exist or is not a directory')
-    elif backend := get_known_backends().get(_normalize(backend_string)):
+    elif backend := get_known_backend(backend_string):
         import_name = backend.import_name
         backend_dir = get_backend_dir(backend.project_name)
         if not backend_dir.is_dir():

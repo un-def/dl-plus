@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from typing import Optional
+
 from dl_plus.backend import (
-    AutodetectFailed, get_backend_dir, get_known_backends, init_backend,
+    AutodetectFailed, get_backend_dir, get_known_backend, get_known_backends,
+    init_backend,
 )
 from dl_plus.cli.args import Arg
 from dl_plus.cli.commands.base import BaseUpdateCommand
@@ -56,3 +59,9 @@ class BackendUpdateCommand(
 
     def get_short_name(self) -> str:
         return self.project_name
+
+    def get_extras(self) -> Optional[list[str]]:
+        backend = get_known_backend(self.project_name)
+        if backend is not None:
+            return backend.extras
+        return None
