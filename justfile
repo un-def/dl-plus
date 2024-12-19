@@ -22,9 +22,20 @@ exe: clean
 pyz: clean
   {{python}} {{scripts_dir}}/build_pyz.py
 
+fix:
+  isort .
+
+lint:
+  isort . -c
+  flake8
+
 [positional-arguments]
 @test *args:
   pytest "${@}"
+
+[positional-arguments]
+@tox *args:
+  tox run "${@}"
 
 [positional-arguments]
 @run *args:
