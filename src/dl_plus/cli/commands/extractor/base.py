@@ -10,7 +10,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from dl_plus.cli.commands.base import BaseInstallUpdateCommand as _base
-    from dl_plus.pypi import Wheel
 else:
     _base = object
 
@@ -29,11 +28,11 @@ class ExtractorInstallUninstallUpdateCommandMixin(_base):
         plugin_name = self.args.name
         match = PLUGIN_NAME_REGEX.fullmatch(plugin_name)
         if not match:
-            self.die(f'Invalid extractor plugin name: {plugin_name}')
+            self.die(f'invalid extractor plugin name: {plugin_name}')
         self.ns, self.plugin = match.groups()
         self.project_name = f'dl-plus-extractor-{self.ns}-{self.plugin}'
 
-    def get_package_dir(self, wheel: Wheel | None = None) -> Path:
+    def get_package_dir(self) -> Path:
         return get_extractor_plugin_dir(self.ns, self.plugin)
 
     def get_short_name(self) -> str:

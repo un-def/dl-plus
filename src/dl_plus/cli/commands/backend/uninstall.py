@@ -18,5 +18,5 @@ class BackendUninstallCommand(
         assume_yes_arg,
     )
 
-    def get_short_name(self) -> str:
-        return self.args.name
+    fallback_to_config = False
+    allow_autodetect = False

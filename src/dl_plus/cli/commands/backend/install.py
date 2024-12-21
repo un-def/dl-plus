@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional, Tuple
-
-from dl_plus.backend import get_known_backend
 from dl_plus.cli.args import Arg
 from dl_plus.cli.commands.base import BaseInstallCommand
 
@@ -30,16 +27,15 @@ class BackendInstallCommand(
         ),
     )
 
-    def get_project_name_version_tuple(self) -> Tuple[str, Optional[str]]:
-        return (self.args.name, self.args.version)
+    fallback_to_config = False
+    allow_autodetect = False
 
-    def get_short_name(self) -> str:
-        return self.args.name
+    def get_project_name_version_tuple(self) -> tuple[str, str | None]:
+        return (self.project_name, self.args.version)
 
-    def get_extras(self) -> Optional[list[str]]:
-        backend = get_known_backend(self.args.name)
-        if backend is not None:
-            return backend.extras
+    def get_extras(self) -> list[str] | None:
+        if self.backend is not None:
+            return self.backend.extras
         return None
 
     def get_force_flag(self) -> bool:

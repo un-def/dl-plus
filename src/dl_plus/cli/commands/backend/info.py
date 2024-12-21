@@ -16,8 +16,11 @@ class BackendInfoCommand(BackendCommandMixin, Command):
         ),
     )
 
+    fallback_to_config = True
+    allow_autodetect = True
+
     def run(self):
-        backend_info = init_backend(self.args.name or self.config.backend)
+        backend_info = init_backend(self.project_name)
         self.print('import name:', backend_info.import_name)
         self.print('version:', backend_info.version)
         self.print('path:', str(backend_info.path))

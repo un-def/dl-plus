@@ -119,7 +119,7 @@ class Command(_CommandBase):
             self.print('Non-interactive mode, assuming no')
             return False
         self.die(
-            'Non-interactive mode, use `--assume-yes` for automatic '
+            'non-interactive mode, use `--assume-yes` for automatic '
             'confirmation'
         )
 
@@ -162,7 +162,7 @@ class BaseInstallUpdateCommand(Command):
     client: PyPIClient
     wheel_installer: WheelInstaller
 
-    def get_package_dir(self, wheel: Wheel) -> Path:
+    def get_package_dir(self) -> Path:
         raise NotImplementedError
 
     def get_short_name(self) -> str:
@@ -195,7 +195,7 @@ class BaseInstallCommand(BaseInstallUpdateCommand):
         wheel = self.client.fetch_wheel_info(name, version)
         self.print(f'Found remote version: {wheel.name} {wheel.version}')
 
-        package_dir = self.get_package_dir(wheel)
+        package_dir = self.get_package_dir()
         installed_metadata = self.load_installed_metadata(package_dir)
         if not installed_metadata:
             self.install(wheel, package_dir)
@@ -249,7 +249,7 @@ class BaseUpdateCommand(BaseInstallUpdateCommand):
         wheel = self.client.fetch_wheel_info(name)
         self.print(f'Found remote version: {wheel.name} {wheel.version}')
 
-        package_dir = self.get_package_dir(wheel)
+        package_dir = self.get_package_dir()
         installed_metadata = self.load_installed_metadata(package_dir)
         if not installed_metadata:
             command_prefix = ' '.join(

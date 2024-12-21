@@ -1,17 +1,23 @@
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, NamedTuple, Optional
 
 from dl_plus import ytdl
-from dl_plus.config import ConfigValue, _Config, get_config_home, get_data_home
+from dl_plus.config import (
+    ConfigError, ConfigValue, _Config, get_config_home, get_data_home,
+)
 from dl_plus.exceptions import DLPlusException
 from dl_plus.pypi import load_metadata
 
 
 if TYPE_CHECKING:
     from .pypi import Metadata
+
+
+PROJECT_NAME_REGEX = re.compile(r'^[A-Za-z][A-Za-z0-9_-]*$')
 
 
 def _normalize(string: str) -> str:
@@ -57,14 +63,21 @@ executable-name = youtube-dlc
 """
 
 
+def is_project_name_valid(name: str) -> bool:
+    return PROJECT_NAME_REGEX.fullmatch(name) is not None
+
+
 def parse_backends_config(content: str) -> dict[str, Backend]:
     config = _Config()
     config.read_string(content)
     backends = {}
     for alias in config.sections():
         section = config[alias]
+        project_name = section['project-name']
+        if not is_project_name_valid(project_name):
+            raise ConfigError(f'invalid project-name: {project_name}')
         backends[_normalize(alias)] = Backend(
-            project_name=section['project-name'],
+            project_name=project_name,
             import_name=section['import-name'],
             executable_name=section['executable-name'],
             extras=section.get('extras', '').split(),
