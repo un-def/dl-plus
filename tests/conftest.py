@@ -11,9 +11,8 @@ def pytest_configure(config):
     for dlp_var in dlp_vars:
         del os.environ[dlp_var]
 
-    import dl_plus.config
+    from dl_plus import config as conf
     from dl_plus.backend import init_backend
-    from dl_plus.config import ConfigValue
 
-    dl_plus.config._config_home = pathlib.Path('fake-dl-plus-home')
-    init_backend(config.getoption('backend') or ConfigValue.Backend.AUTODETECT)
+    conf._config_home = conf._data_home = pathlib.Path('fake-dl-plus-home')
+    init_backend(config.getoption('backend'))

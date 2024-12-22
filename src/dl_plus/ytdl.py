@@ -54,6 +54,7 @@ def init(ytdl_module_name: str) -> None:
 
 def run(args):
     _check_initialized()
+    global _ytdl_module
     global _ytdl_module_name
     orig_sys_argv = sys.argv
     try:
@@ -81,6 +82,7 @@ def get_ytdl_module_version():
 
 def get_help():
     _check_initialized()
+    global _ytdl_module
     with StringIO() as buffer:
         stdout, stderr = sys.stdout, sys.stderr
         sys.stdout = sys.stderr = buffer

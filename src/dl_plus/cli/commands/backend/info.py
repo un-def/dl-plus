@@ -1,4 +1,3 @@
-from dl_plus.backend import init_backend
 from dl_plus.cli.args import Arg
 from dl_plus.cli.commands.base import Command
 
@@ -18,14 +17,16 @@ class BackendInfoCommand(BackendCommandMixin, Command):
 
     fallback_to_config = True
     allow_autodetect = True
+    init_backend = True
 
     def run(self):
-        backend_info = init_backend(self.project_name)
-        self.print('import name:', backend_info.import_name)
-        self.print('version:', backend_info.version)
-        self.print('path:', str(backend_info.path))
-        self.print('managed:', 'yes' if backend_info.is_managed else 'no')
+        backend_info = self.backend_info
+        assert backend_info is not None
         metadata = backend_info.metadata
         if metadata:
             self.print('project name:', metadata.name)
             self.print('project version:', metadata.version)
+        self.print('import name:', backend_info.import_name)
+        self.print('version:', backend_info.version)
+        self.print('path:', str(backend_info.path))
+        self.print('managed:', 'yes' if backend_info.is_managed else 'no')

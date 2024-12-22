@@ -112,11 +112,12 @@ def get_known_backend(alias: str) -> Optional[Backend]:
 
 
 class BackendInfo(NamedTuple):
+    alias: str | None
     import_name: str
     version: str
     path: Path
     is_managed: bool
-    metadata: Optional[Metadata]
+    metadata: Metadata | None
 
 
 class BackendError(DLPlusException):
@@ -150,54 +151,73 @@ def get_backend_dir(backend: str) -> Path:
     return get_backends_dir() / _normalize(backend)
 
 
-def parse_backend_string(backend_string: str) -> tuple[Path | None, str]:
+def parse_backend_string(backend_string: str) -> tuple[bool, Path | None, str]:
     # backend_string is one of:
     #   * alias ([section-name] in the backends.ini, e.g., 'yt-dlp');
     #   * 'import_name', e.g., 'youtube_dl';
     #   * 'project-name/import_name', e.g., 'youtube-dl-nightly/youtube_dl'.
+    # is_alias is only True if [alias] != project-name, e.g.,
+    #   * [yt-dlp] with project-name = yt-dlp -> False
+    #   * [yt-dlp-noextras] with project-name = yt-dlp -> True
+    is_alias: bool
     if '/' in backend_string:
+        is_alias = False
         project_name, _, import_name = backend_string.partition('/')
         backend_dir = get_backend_dir(project_name)
         if not backend_dir.is_dir():
             raise BackendError(
                 f'{backend_dir} does not exist or is not a directory')
     elif backend := get_known_backend(backend_string):
+        is_alias = (
+            _normalize(backend_string) != _normalize(backend.project_name))
         import_name = backend.import_name
-        backend_dir = get_backend_dir(backend.project_name)
+        backend_dir = get_backend_dir(backend_string)
         if not backend_dir.is_dir():
             # in case of backends not managed by dl-plus
             backend_dir = None
     else:
+        is_alias = False
         import_name = backend_string
         backend_dir = get_backend_dir(backend_string)
         if not backend_dir.is_dir():
             backend_dir = None
-    return backend_dir, _normalize(import_name)
+    return is_alias, backend_dir, _normalize(import_name)
 
 
 def _init_backend(backend_string: str) -> Path | None:
-    backend_dir, package_name = parse_backend_string(backend_string)
+    is_alias, backend_dir, package_name = parse_backend_string(backend_string)
+    if is_alias and not backend_dir:
+        # avoid picking wrong backend by import_name only
+        raise BackendError(f'{backend_string} is not installed')
     if backend_dir:
         sys.path.insert(0, str(backend_dir))
     ytdl.init(package_name)
     return backend_dir
 
 
-def _autodetect_backend() -> Path | None:
+def _autodetect_backend() -> tuple[str, Path | None]:
     candidates = tuple(get_known_backends())
     for candidate in candidates:
         try:
-            return _init_backend(candidate)
+            return candidate, _init_backend(candidate)
         except DLPlusException:
             pass
     raise AutodetectFailed(candidates)
 
 
-def init_backend(backend_string: str) -> BackendInfo:
+def init_backend(backend_string: str | None = None) -> BackendInfo:
+    if backend_string is None:
+        backend_string = ConfigValue.Backend.AUTODETECT
+    alias: str | None
     if backend_string == ConfigValue.Backend.AUTODETECT:
-        backend_dir = _autodetect_backend()
+        alias, backend_dir = _autodetect_backend()
     else:
         backend_dir = _init_backend(backend_string)
+        backend = get_known_backend(backend_string)
+        if backend is not None:
+            alias = backend_string
+        else:
+            alias = None
     ytdl_module = ytdl.get_ytdl_module()
     path = Path(ytdl_module.__path__[0])
     is_managed = _is_managed(path)
@@ -206,6 +226,7 @@ def init_backend(backend_string: str) -> BackendInfo:
     else:
         metadata = None
     return BackendInfo(
+        alias=alias,
         import_name=ytdl_module.__name__,
         version=ytdl.import_from('version', '__version__'),
         path=path,

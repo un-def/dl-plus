@@ -40,3 +40,7 @@ lint:
 [positional-arguments]
 @run *args:
   {{python}} -m dl_plus "${@}"
+
+[positional-arguments]
+@cmd *args:
+  just run --cmd "${@}"

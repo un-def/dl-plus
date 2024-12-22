@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, ClassVar
 
 from dl_plus import backend
 from dl_plus.backend import (
-    AutodetectFailed, Backend, get_backend_dir, get_known_backend,
-    get_known_backends, is_project_name_valid,
+    Backend, BackendInfo, get_known_backend, init_backend,
+    is_project_name_valid,
 )
 from dl_plus.config import ConfigValue
 
@@ -21,10 +21,12 @@ else:
 class BackendCommandMixin(_base):
     fallback_to_config: ClassVar[bool]
     allow_autodetect: ClassVar[bool]
+    init_backend: ClassVar[bool]
 
     project_name: str
-    backend_alias: str | None   # [section_name] is backends.ini
-    backend: Backend | None
+    backend_alias: str | None = None  # [section_name] is backends.ini
+    backend: Backend | None = None
+    backend_info: BackendInfo | None = None
 
     def init(self):
         super().init()
@@ -32,7 +34,13 @@ class BackendCommandMixin(_base):
         if project_name_or_backend_alias is None and self.fallback_to_config:
             project_name_or_backend_alias = self.config.backend
         if project_name_or_backend_alias == ConfigValue.Backend.AUTODETECT:
-            project_name_or_backend_alias = self._autodetect_backend()
+            if not self.allow_autodetect:
+                self.die(
+                    f'{ConfigValue.Backend.AUTODETECT} is not allowed '
+                    f'in {self.name} command'
+                )
+            self.backend_info = init_backend()
+            project_name_or_backend_alias = self.backend_info.alias
         if project_name_or_backend_alias is None:
             self.die('Backend argument is required')
         backend = get_known_backend(project_name_or_backend_alias)
@@ -42,22 +50,10 @@ class BackendCommandMixin(_base):
             self.backend = backend
         else:
             self.project_name = project_name_or_backend_alias
-            self.backend_alias = None
-            self.backend = None
         if not is_project_name_valid(self.project_name):
             self.die(f'invalid backend name: {self.project_name}')
-
-    def _autodetect_backend(self) -> str:
-        if not self.allow_autodetect:
-            self.die(
-                f'{ConfigValue.Backend.AUTODETECT} is not allowed '
-                f'in {self.name} command'
-            )
-        candidates = tuple(get_known_backends())
-        for candidate in candidates:
-            if get_backend_dir(candidate).exists():
-                return candidate
-        raise AutodetectFailed(candidates)
+        if self.backend_info is None and self.init_backend:
+            self.backend_info = init_backend(project_name_or_backend_alias)
 
 
 class BackendInstallUninstallUpdateCommandMixin(BackendCommandMixin):

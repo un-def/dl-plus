@@ -29,6 +29,7 @@ class BackendInstallCommand(
 
     fallback_to_config = False
     allow_autodetect = False
+    init_backend = False
 
     def get_project_name_version_tuple(self) -> tuple[str, str | None]:
         return (self.project_name, self.args.version)
