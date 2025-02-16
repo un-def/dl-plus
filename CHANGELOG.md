@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.10.0
+
+### Features
+
+  * Backend `extras` support. `yt-dlp` is now installed with `default`, `curl-cffi`, `secretstorage` extra dependencies by default (configurable via `backends.ini`).
+  * **(CLI)** Proper alias support.
+
+### Fixes
+
+  * Fix backend autodetect inconsistency. Previously, `dl-plus <URL>` and `dl-plus --cmd backend <CMD>` could pick different backends if unmanaged backends were present.
+
 ## 0.9.0
 
 ### Breaking Changes
