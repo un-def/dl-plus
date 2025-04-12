@@ -7,3 +7,4 @@ filename =
     ./dl-plus.spec
 show_source = true
 statistics = true
+ignore = F824, W503
