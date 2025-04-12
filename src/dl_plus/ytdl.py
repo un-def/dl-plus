@@ -119,7 +119,8 @@ def get_all_extractors(*, include_generic: bool):
     _check_initialized()
     global _extractors
     if _extractors is _NOT_SET:
-        _extractors = tuple(import_module('extractor')._ALL_CLASSES)
+        _extractors = tuple(
+            import_from('extractor', 'gen_extractor_classes')())
     if include_generic:
         return _extractors
     return _extractors[:-1]

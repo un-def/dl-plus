@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.1 (UNRELEASED)
+
+### Fixes
+
+  * Fix compatibility with `yt-dlp` 2025.03.21+
+
 ## 0.10.0
 
 ### Features
