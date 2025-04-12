@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.10.1 (UNRELEASED)
+## 0.10.1
 
 ### Fixes
 
